@@ -28,4 +28,4 @@ with open('data/update.log', 'a') as logfile:
     # Prepend the log content to the file
     prepend_to_file('data/update.log', log_content)
 
-subprocess.run('sudo systemctl restart flask.service', shell=True, text=True)
+subprocess.run('sudo systemctl restart tuftedfox', shell=True, text=True)

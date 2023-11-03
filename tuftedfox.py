@@ -40,6 +40,7 @@ def index():
 def update_server():
     if request.method == 'POST':
         if request.form.get('secret_word') == secret_password:
+            print("RUNNING UPDATER!!!!!!!!!!!!!!!!!!!!!!")
             subprocess.run('python3 updater.py', shell=True)
 
     with open('data/update.log', 'r') as logfile:

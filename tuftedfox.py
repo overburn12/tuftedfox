@@ -18,6 +18,19 @@ app_start_time = int(datetime.utcnow().timestamp())
 # functions 
 #-------------------------------------------------------------------
 
+def save_ip_counts():
+    with open('data/ip_counts.json', 'w') as f:
+        json.dump(ip_counts, f)
+
+def load_ip_counts():
+    try:
+        with open('data/ip_counts.json', 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+ip_counts = load_ip_counts()
+
 def load_images_to_memory():
     image_folder = 'img/'
     image_filenames = os.listdir(image_folder)
@@ -34,6 +47,9 @@ load_images_to_memory()
 
 @app.route('/')
 def index():
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    ip_counts[ip] = ip_counts.get(ip, 0) + 1
+    save_ip_counts()
     return render_template('index.html')
 
 @app.route('/update', methods=['GET', 'POST'])
@@ -80,6 +96,15 @@ def image_gallery():
 
     html_content += '</center></body></html>'
     return html_content
+
+
+@app.route('/view_count', methods=['GET'])
+def view_count_page():
+    return render_template('count.html')
+
+@app.route('/count', methods=['GET'])
+def count_connections():
+    return jsonify(ip_counts)
 
 #-------------------------------------------------------------------
 

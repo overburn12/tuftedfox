@@ -63,6 +63,10 @@ def update_server():
 
     return render_template('update.html', log_content=log_content, app_start_time=app_start_time)
 
+@app.route('/view_count', methods=['GET'])
+def view_count_page():
+    return render_template('count.html', ip_counts = ip_counts)
+
 #-------------------------------------------------------------------
 # api routes
 #-------------------------------------------------------------------
@@ -96,15 +100,6 @@ def image_gallery():
 
     html_content += '</center></body></html>'
     return html_content
-
-
-@app.route('/view_count', methods=['GET'])
-def view_count_page():
-    return render_template('count.html')
-
-@app.route('/count', methods=['GET'])
-def count_connections():
-    return jsonify(ip_counts)
 
 #-------------------------------------------------------------------
 

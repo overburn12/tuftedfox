@@ -53,39 +53,15 @@
             </tr>
         </thead>
         <tbody id="chatsTableBody">
-            <!-- Data will be populated here using JavaScript -->
+        <!-- Data will be populated here -->
+        {% for ip, count in ip_counts.items()|sort(attribute='1', reverse=true) %}
+        <tr>
+            <td>{{ ip }} </td>
+            <td>{{ count }}</td>
+        </tr>
+        {% endfor %}
         </tbody>
     </table>
-
-    <script>
-        async function fetchAndDisplayCounts() {
-            const chatsTableBody = document.getElementById('chatsTableBody');
-
-            try {
-                const response = await fetch('/count');
-                const data = await response.json();
-
-                // Sort the data by chat count in descending order
-                const sortedData = Object.entries(data)
-                .sort(([, a], [, b]) => b - a);
-
-                for (const [ip, chatsCount] of sortedData) {
-                    const row = `
-                        <tr>
-                            <td>${ip}</td>
-                            <td>${chatsCount}</td>
-                        </tr>
-                    `;
-
-                    chatsTableBody.innerHTML += row;
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        }
-
-        fetchAndDisplayCounts();
-    </script>
 </body>
 
 </html>

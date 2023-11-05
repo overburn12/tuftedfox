@@ -19,7 +19,7 @@ body {
   color: antiquewhite;
   padding: 10px;
   font-size: 20px;
-  box-shadow: 0px 2px 5px rgba(0,0,0,0.2); /* Adds depth */
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.5);
   
   display: flex;
   justify-content: center; /* Horizontally center the content */
@@ -29,15 +29,21 @@ body {
 #content {
   margin-top: 40px; /* Increased to account for the larger header */
   color: #333333; /* Dark gray text for better readability */
-  min-height: calc(100vh - 95px - 30px); /* Adjusted for consistent spacing */
+  min-height: calc(100vh - 90px - 30px); /* Adjusted for consistent spacing */
   padding-top: 30px;
 }
 
 #footer {
   background: #3E4E50; /* Same as header for consistency */
-  color: white; /* Changed for contrast */
-  padding: 20px; /* More padding for balance */
-  height: auto; /* Let the content define the height */
+  color: antiquewhite;
+  padding: 10px;  /*More padding for balance */
+  height: 30px;
+  font-size: 20px;
+  box-shadow: 0px -2px 10px rgba(0,0,0,0.5); /* Adds depth */
+
+  display: flex;
+  justify-content: center; /* Horizontally center the content */
+  align-items: center; /* Vertically center the content */
 }
 
 a {
@@ -55,20 +61,15 @@ a:hover {
   text-decoration: underline; /* Adds underline on hover for traditional link appearance */
 }
 
-
 pre{
   width: 700px;
   display: block;
   background-color: #030303;
   border: 0px;
   border-radius: 10px;
-  padding: 0px;
+  padding: 10px;
   font-family: monospace;
   font-size: 14px;
   color: #f5f5f5;
   text-align: left;
-}
-
-code{
-  padding: 5px;
 }

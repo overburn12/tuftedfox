@@ -71,17 +71,11 @@ images_404 = load_404_images_to_memory()
 @app.before_request
 def before_request():
     global page_hits
-
-    # Get the requested page
     page = request.path
 
     # Track hits per page
     page_hits[page] = page_hits.get(page, 0) + 1
-    save_page_hits()  # Save page hits as needed
-
-@app.context_processor
-def inject_page_hits():
-    return dict(page_hits=page_hits)
+    save_page_hits()  # Save page hits as needed, this is not a permanent spot to do it
 
 #-------------------------------------------------------------------
 # page routes
@@ -103,9 +97,21 @@ def update_server():
 
     return render_template('update.html', log_content=log_content, app_start_time=app_start_time)
 
-@app.route("/count")
-def count():
-    return render_template("count.html", page_hits=page_hits)
+@app.route('/count')
+def count_page():
+    return render_template('count.html', page_hits=page_hits)
+
+@app.route('/order')
+def order_page():
+    return render_template('order.html')
+
+@app.route('/gallery')
+def gallery_page():
+    return render_template('gallery.html')
+
+@app.route('/about')
+def about_tuftedfox():
+    return render_template('about.html')
 
 #-------------------------------------------------------------------
 # api routes

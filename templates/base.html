@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TuftedFox - {{ page_title }} </title>
+  <title>{% block title %}TuftedFox{% endblock %}</title>
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -15,7 +15,7 @@
     </div>
   </div>
   <div id="content">
-    {{ page_content | safe }}
+    {% block content %}{% endblock %}
   </div>
   <div id="footer">
     <div id="footer_inner">

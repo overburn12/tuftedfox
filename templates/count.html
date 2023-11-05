@@ -1,34 +1,41 @@
-<br>
-<table id="hitsTable" style="width: 500px; margin: 20px auto; border-collapse: collapse;">
-    <thead>
-        <tr>
-            <th style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">IP Address</th>
-            <th style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">Hits</th>
-        </tr>
-    </thead>
-    <tbody id="hitsTableBody">
-    <!-- Data will be populated here -->
-    {% for ip, count in ip_counts.items()|sort(attribute='1', reverse=true) %}
-    <tr>
-        <td style="border: 0px; padding: 8px 12px; color: white; background-color: #030303;">{{ ip }}</td>
-        <td style="border: 0px; padding: 8px 12px; color: white; background-color: #030303;">{{ count }}</td>
-    </tr>
-    {% endfor %}
-    <tr>
-        <td style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">Total IP Counts:</td>
-        <td id="totalIpCounts" style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;"></td>
-    </tr>
-    </tbody>
-</table>
-<br>
+{% extends "base.html" %}
 
-<script>
-    // Convert your ip_counts to a JSON string and then parse it with JavaScript
-    var ipCounts = JSON.parse('{{ ip_counts|tojson|safe }}');
- 
-    // Now you have a JavaScript object that you can use to calculate the total
-    var totalCount = Object.values(ipCounts).reduce((a, b) => a + b, 0);
- 
-    // Display the total IP counts
-    document.getElementById("totalIpCounts").textContent = totalCount;
- </script>
+{% block title %}TuftedFox - Page Hits{% endblock %}
+
+{% block content %}
+    <br>
+    <table id="hitsTable" style="width: 500px; margin: 20px auto; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">IP Address</th>
+                <th style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">Hits</th>
+            </tr>
+        </thead>
+        <tbody id="hitsTableBody">
+        <!-- Data will be populated here -->
+        {% for ip, count in ip_counts.items()|sort(attribute='1', reverse=true) %}
+        <tr>
+            <td style="border: 0px; padding: 8px 12px; color: white; background-color: #030303;">{{ ip }}</td>
+            <td style="border: 0px; padding: 8px 12px; color: white; background-color: #030303;">{{ count }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">Total IP Counts:</td>
+            <td id="totalIpCounts" style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;"></td>
+        </tr>
+        </tbody>
+    </table>
+    <br>
+
+    <script>
+        // Convert your ip_counts to a JSON string and then parse it with JavaScript
+        var ipCounts = JSON.parse('{{ ip_counts|tojson|safe }}');
+    
+        // Now you have a JavaScript object that you can use to calculate the total
+        var totalCount = Object.values(ipCounts).reduce((a, b) => a + b, 0);
+    
+        // Display the total IP counts
+        document.getElementById("totalIpCounts").textContent = totalCount;
+    </script>
+{% endblock %}
+

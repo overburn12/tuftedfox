@@ -73,8 +73,7 @@ def index():
     ip_counts[ip] = ip_counts.get(ip, 0) + 1
     save_ip_counts()
 
-    inner_html = render_template('index.html')
-    return render_template('base.html', page_content=inner_html, page_title='Home Page')
+    return render_template('index.html')
 
 @app.route('/update', methods=['GET', 'POST'])
 def update_server():
@@ -85,14 +84,11 @@ def update_server():
     with open('data/update.log', 'r') as logfile:
         log_content = logfile.read()
 
-    inner_html = render_template('update.html', log_content=log_content, app_start_time=app_start_time)
-
-    return render_template('base.html', page_content=inner_html, page_title='Update Server')
+    return render_template('update.html', log_content=log_content, app_start_time=app_start_time)
 
 @app.route('/view_count', methods=['GET'])
 def view_count_page():
-    inner_html = render_template('count.html', ip_counts=ip_counts)
-    return render_template('base.html', page_content=inner_html, page_title='Page Hits')
+    return render_template('count.html', ip_counts=ip_counts)
 
 #-------------------------------------------------------------------
 # api routes
@@ -126,8 +122,7 @@ def serve_image(image_name):
 @app.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly
-    inner_html = render_template('404.html')
-    return render_template('base.html', page_content=inner_html, page_title='404: Not Found'), 404
+    return render_template('404.html'), 404
 
 #-------------------------------------------------------------------
 

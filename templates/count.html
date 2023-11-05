@@ -1,67 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overburn.org - Counts</title>
-    <style>
-        a {
-            color: white;
-            text-decoration: none;
-        }
-
-        a:visited {
-            color: white;
-            text-decoration: none;
-        }
-
-        body{
-            background-color: #343541;
-            color: #f5f5f5;
-        }
-        table {
-            width: 500px;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            border: 0px;
-            padding: 8px 12px;
-            color: white;
-        }
-
-        th {
-            background-color: #413434;
-        }
-
-        td {
-            background-color: #030303;
-        }
-    </style>
-</head>
-
-<body>
-    <a href="{{ url_for('index') }}">index.html</a><br>
-    <table id="chatsTable">
-        <thead>
-            <tr>
-                <th>IP Address</th>
-                <th>Hits</th>
-            </tr>
-        </thead>
-        <tbody id="chatsTableBody">
-        <!-- Data will be populated here -->
-        {% for ip, count in ip_counts.items()|sort(attribute='1', reverse=true) %}
+<a href="{{ url_for('index') }}">index.html</a><br>
+<table id="hitsTable" style="width: 500px; margin: 20px auto; border-collapse: collapse;">
+    <thead>
         <tr>
-            <td>{{ ip }} </td>
-            <td>{{ count }}</td>
+            <th style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">IP Address</th>
+            <th style="border: 0px; padding: 8px 12px; color: white; background-color: #413434;">Hits</th>
         </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</body>
-
-</html>
+    </thead>
+    <tbody id="hitsTableBody">
+    <!-- Data will be populated here -->
+    {% for ip, count in ip_counts.items()|sort(attribute='1', reverse=true) %}
+    <tr>
+        <td style="border: 0px; padding: 8px 12px; color: white; background-color: #030303;">{{ ip }} </td>
+        <td style="border: 0px; padding: 8px 12px; color: white; background-color: #030303;">{{ count }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>

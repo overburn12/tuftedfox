@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TuftedFox - {{ page_title }} </title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div id="header">
+    <div id ="header_inner">
+      TuftedFox Rugs &bull;
+      <a href="/">Home</a> &bull;
+      <a href="/gallery">Gallery</a> &bull;
+      <a href="/order">Order</a> &bull;
+      <a href="/about">About</a>
+    </div>
+  </div>
+
+  <div id="content">
+    {{ page_content | safe }}
+  </div>
+
+  <div id="footer">
+    <a href="/view_count">Page Hits</a> &bull;
+    <a href="/update">Update</a> &bull;
+    &copy; Overburn 2023
+    
+  </div>
+</body>
+</html>

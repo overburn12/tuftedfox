@@ -1,4 +1,4 @@
-import subprocess, json, os, requests
+import subprocess, json, os, requests, random
 from flask import Flask, render_template, request, jsonify, abort, Response
 from datetime import datetime
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ app = Flask(__name__)
 load_dotenv()
 secret_password = os.getenv('SECRET_PASSWORD')
 images = {}
+images_404 = {}
 app_start_time = int(datetime.utcnow().timestamp())
 
 #-------------------------------------------------------------------
@@ -33,13 +34,34 @@ ip_counts = load_ip_counts()
 
 def load_images_to_memory():
     image_folder = 'img/'
-    image_filenames = os.listdir(image_folder)
-    
-    for filename in image_filenames:
-        with app.open_resource(os.path.join(image_folder, filename), 'rb') as f:
-            images[filename] = f.read()
+    image_entries = os.listdir(image_folder)
+    images = {}
 
-load_images_to_memory()
+    for entry in image_entries:
+        entry_path = os.path.join(image_folder, entry)
+        # Check if the entry is a file
+        if os.path.isfile(entry_path):
+            with open(entry_path, 'rb') as f:
+                images[entry] = f.read()
+
+    return images
+
+images = load_images_to_memory()
+
+def load_404_images_to_memory():
+    image_folder = 'img/404/'
+    image_entries = os.listdir(image_folder)
+    images = {}
+
+    for entry in image_entries:
+        entry_path = os.path.join(image_folder, entry)
+        # Check if the entry is a file
+        if os.path.isfile(entry_path):
+            with app.open_resource(entry_path, 'rb') as f:
+                images[entry] = f.read()
+    return images
+
+images_404 = load_404_images_to_memory()
 
 #-------------------------------------------------------------------
 # page routes
@@ -50,7 +72,9 @@ def index():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     ip_counts[ip] = ip_counts.get(ip, 0) + 1
     save_ip_counts()
-    return render_template('index.html')
+
+    inner_html = render_template('index.html')
+    return render_template('base.html', page_content=inner_html, page_title='Home Page')
 
 @app.route('/update', methods=['GET', 'POST'])
 def update_server():
@@ -61,15 +85,23 @@ def update_server():
     with open('data/update.log', 'r') as logfile:
         log_content = logfile.read()
 
-    return render_template('update.html', log_content=log_content, app_start_time=app_start_time)
+    inner_html = render_template('update.html', log_content=log_content, app_start_time=app_start_time)
+
+    return render_template('base.html', page_content=inner_html, page_title='Update Server')
 
 @app.route('/view_count', methods=['GET'])
 def view_count_page():
-    return render_template('count.html', ip_counts = ip_counts)
+    inner_html = render_template('count.html', ip_counts=ip_counts)
+    return render_template('base.html', page_content=inner_html, page_title='Page Hits')
 
 #-------------------------------------------------------------------
 # api routes
 #-------------------------------------------------------------------
+
+@app.route('/404.png')
+def serve_random_404_image():
+    random_filename = random.choice(list(images_404.keys()))
+    return Response(images_404[random_filename], mimetype='image/png')
 
 @app.route('/<path:image_name>')
 def serve_image(image_name):
@@ -89,17 +121,13 @@ def serve_image(image_name):
     else:
         abort(404)  # Return a 404 error if the image or MIME type is not found
 
-@app.route('/gallery')
-def image_gallery():
-    html_content = '<!DOCTYPE html><html><body><center>'
-    
-    for filename in images.keys():
-        name, extension = os.path.splitext(filename)  
-        html_content += f'<figure><img src="/{name}{extension}" alt="{filename}">'
-        html_content += f'<figcaption>{filename}</figcaption></figure>'
+#-------------------------------------------------------------------
 
-    html_content += '</center></body></html>'
-    return html_content
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    inner_html = render_template('404.html')
+    return render_template('base.html', page_content=inner_html, page_title='404: Not Found'), 404
 
 #-------------------------------------------------------------------
 

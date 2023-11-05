@@ -1,5 +1,5 @@
 import subprocess, json, os, requests, random
-from flask import Flask, render_template, request, jsonify, abort, Response
+from flask import Flask, render_template, request, jsonify, abort, Response, g
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -11,26 +11,27 @@ app = Flask(__name__)
 
 load_dotenv()
 secret_password = os.getenv('SECRET_PASSWORD')
+app_start_time = int(datetime.utcnow().timestamp())
 images = {}
 images_404 = {}
-app_start_time = int(datetime.utcnow().timestamp())
+page_hits = {}
 
 #-------------------------------------------------------------------
 # functions 
 #-------------------------------------------------------------------
 
-def save_ip_counts():
-    with open('data/ip_counts.json', 'w') as f:
-        json.dump(ip_counts, f)
+def save_page_hits():
+    with open('data/page_hits.json', 'w') as f:
+        json.dump(page_hits, f)
 
-def load_ip_counts():
+def load_page_hits():
     try:
-        with open('data/ip_counts.json', 'r') as f:
+        with open('data/page_hits.json', 'r') as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
-ip_counts = load_ip_counts()
+page_hits = load_page_hits()
 
 def load_images_to_memory():
     image_folder = 'img/'
@@ -64,15 +65,31 @@ def load_404_images_to_memory():
 images_404 = load_404_images_to_memory()
 
 #-------------------------------------------------------------------
+# page count injection
+#-------------------------------------------------------------------
+
+@app.before_request
+def before_request():
+    global page_hits
+
+    # Get the requested page
+    page = request.path
+
+    # Track hits per page
+    page_hits[page] = page_hits.get(page, 0) + 1
+    save_page_hits()  # Save page hits as needed
+
+@app.context_processor
+def inject_page_hits():
+    return dict(page_hits=page_hits)
+
+#-------------------------------------------------------------------
 # page routes
 #-------------------------------------------------------------------
 
 @app.route('/')
 def index():
-    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    ip_counts[ip] = ip_counts.get(ip, 0) + 1
-    save_ip_counts()
-
+    #ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     return render_template('index.html')
 
 @app.route('/update', methods=['GET', 'POST'])
@@ -86,9 +103,9 @@ def update_server():
 
     return render_template('update.html', log_content=log_content, app_start_time=app_start_time)
 
-@app.route('/view_count', methods=['GET'])
-def view_count_page():
-    return render_template('count.html', ip_counts=ip_counts)
+@app.route("/count")
+def count():
+    return render_template("count.html", page_hits=page_hits)
 
 #-------------------------------------------------------------------
 # api routes
@@ -96,6 +113,7 @@ def view_count_page():
 
 @app.route('/404.png')
 def serve_random_404_image():
+    #serve a random image as the 404.png   ill remove this later so the front end will choose the image
     random_filename = random.choice(list(images_404.keys()))
     return Response(images_404[random_filename], mimetype='image/png')
 

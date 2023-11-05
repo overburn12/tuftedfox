@@ -46,6 +46,31 @@ body {
   align-items: center; /* Vertically center the content */
 }
 
+
+/* Styles for the table on /count page */
+#page_hits_table {
+  margin: 0 auto; /* Centers the table */
+  width: 500px; /* Adjust width as needed */
+  border-collapse: collapse; /* Removes space between table cells */
+  background: #FAF8F5; /* Background color */
+}
+
+#page_hits_table th, #page_hits_table td {
+  border: 1px solid #3E4E50; /* Border color */
+  padding: 10px; /* Spacing inside cells */
+  text-align: center; /* Center-align text */
+}
+
+#page_hits_table th {
+  background: #3E4E50; /* Header background color */
+  color: antiquewhite; /* Header text color */
+}
+
+#page_hits_table td {
+  color: #333333; /* Cell text color */
+}
+
+
 a {
   color: #FFA500; /* Vibrant orange for links */
   text-decoration: none; /* Removes underline */

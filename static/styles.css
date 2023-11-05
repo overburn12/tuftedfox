@@ -29,8 +29,8 @@ body {
 #content {
   margin-top: 40px; /* Increased to account for the larger header */
   color: #333333; /* Dark gray text for better readability */
-  min-height: calc(100vh - 100px); /* Adjusted for consistent spacing */
-  padding-top: 50px;
+  min-height: calc(100vh - 95px - 30px); /* Adjusted for consistent spacing */
+  padding-top: 30px;
 }
 
 #footer {

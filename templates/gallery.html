@@ -2,23 +2,11 @@
 
 {% block title %}TuftedFox - Gallery{% endblock %}
 
-{% block content %}
-<div class="gallery-grid">
-    {% for thumbnail_url, image_url in image_data %}
-    <img class="gallery-item" src="{{ thumbnail_url }}" data-fullsize="{{ image_url }}" onclick="toggleImage(this)">
-    {% endfor %}
-</div>
-
-<script>
-    // Function to toggle between thumbnail and full-size image
-    function toggleImage(imgElement) {
-        var fullSizeUrl = imgElement.getAttribute('data-fullsize');
-        var isThumbnail = imgElement.src !== fullSizeUrl;
-        imgElement.src = isThumbnail ? fullSizeUrl : imgElement.getAttribute('data-thumbnail-url');
-        imgElement.classList.toggle('fullsize');
-    }
-</script>
-
+{% block head %}
+<!-- Include jQuery first if it's a dependency -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- Then include Panzoom -->
+<script src="https://unpkg.com/@panzoom/panzoom"></script>
 <style>
     .gallery-grid {
         display: grid;
@@ -33,64 +21,179 @@
         transition: transform 0.3s ease;
         margin-bottom: 10px; /* Space below each image */
     }
-    .gallery-item.fullsize {
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        width: auto;
-        height: auto;
-        max-width: 90%;
-        max-height: 90%;
-        transform: translate(-50%, -50%);
-        z-index: 10;
-    }
-    .gallery-item:not(.fullsize):hover {
-        transform: scale(1.03);
-    }
-    /* Optional overlay when full-size image is displayed */
-    .gallery-item.fullsize:after {
-        content: '';
-        position: fixed;
+
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: 100px; /* Location of the box */
         left: 0;
         top: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        cursor: pointer;
-        z-index: -1;
-    }
-    .overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        display: none;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
     }
 
-    .overlay-content {
+    .modal-content {
+        margin: auto;
+        display: block;
+        width: 80%;
+        max-width: 700px;
+    }
+
+    #caption {
+        margin: auto;
+        display: block;
+        width: 80%;
+        max-width: 700px;
+        text-align: center;
+        color: #ccc;
+        padding: 10px 0;
+        height: 150px;
+    }
+
+    /* Add Animation - Zoom in the Modal */
+    .modal-content, #caption {  
+        animation-name: zoom;
+        animation-duration: 0.6s;
+    }
+
+    @keyframes zoom {
+        from {transform:scale(0)} 
+        to {transform:scale(1)}
+    }
+
+    /* The Close Button */
+    .close {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        max-width: 80%;
-        max-height: 80%;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+        z-index: 1000; 
     }
 
-    .overlay img {
-        width: 100%;
-        height: auto;
-        display: block; /* Removes bottom space under the image */
+    .close:hover,
+    .close:focus {
+        color: #bbb;
+        text-decoration: none;
+        cursor: pointer;
     }
 
-    /* Ensure that the full-size image is not too large on smaller screens */
-    @media (max-width: 768px) {
-        .gallery-item.fullsize {
-            width: 90%;
-            height: auto;
+    /* Responsive Columns - After clicking the image */
+    @media only screen and (max-width: 700px){
+        .modal-content {
+            width: 100%;
         }
     }
+
+    .zoom-controls {
+        position: absolute;
+        top: 10px; /* Adjust as necessary */
+        left: 10px; /* Adjust as necessary */
+        z-index: 10;
+    }
+
+    .zoom-controls button {
+        background-color: #fff;
+        border: none;
+        padding: 5px 10px;
+        margin: 0 2px;
+        cursor: pointer;
+        font-size: 16px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* You might want to add :hover and :focus styles for better user experience */
+    .zoom-controls button:hover,
+    .zoom-controls button:focus {
+        background-color: #e8e8e8;
+    }
 </style>
+
+{% endblock %}
+
+{% block content %}
+<div class="gallery-grid">
+    {% for thumbnail_url, image_url in image_data %}
+    <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}">
+    {% endfor %}
+</div>
+
+<div id="myModal" class="modal">
+    <!-- Close button -->
+    <span class="close">&times;</span>
+
+    <!-- Zoom controls -->
+    <div class="zoom-controls">
+        <button id="zoom-in-button">+</button>
+        <button id="zoom-out-button">-</button>
+    </div>
+
+    <!-- Image will be shown here -->
+    <img class="modal-content" id="img01">
+
+    <!-- Caption text -->
+    <div id="caption"></div>
+</div>
+
+<script>
+    // Get the modal
+    var modal = document.getElementById("myModal");
+    
+    // Get the image and insert it inside the modal - use its "alt" text as caption
+    var modalImg = document.getElementById("img01");
+    var captionText = document.getElementById("caption");
+    
+    document.querySelector('.gallery-grid').addEventListener('click', function(event) {
+        if (event.target.tagName === 'IMG') {
+            modal.style.display = "block";
+            modalImg.src = event.target.getAttribute('url-fullsize');
+            captionText.innerHTML = event.target.alt;
+
+            // Destroy previous instance if it exists
+            if (modalImg.panzoomInstance) {
+                modalImg.panzoomInstance.destroy();
+            }
+
+            // Initialize Panzoom
+            modalImg.panzoomInstance = Panzoom(modalImg, {
+                zoomSpeed: 0.065,
+                minZoom: 1
+            });
+        }
+    });
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+        if (modalImg.panzoomInstance) {
+            modalImg.panzoomInstance.destroy();
+            modalImg.panzoomInstance = null;
+        }
+        modal.style.display = "none";
+    }
+
+    modalImg.addEventListener('wheel', function(e) {
+        e.preventDefault(); // Prevent the default scroll behavior
+        modalImg.panzoomInstance.zoomWithWheel(e);
+    });
+
+    document.getElementById('zoom-in-button').addEventListener('click', function() {
+        modalImg.panzoomInstance.zoomIn();
+        });
+
+    document.getElementById('zoom-out-button').addEventListener('click', function() {
+        modalImg.panzoomInstance.zoomOut();
+    });
+
+    </script>
+
 {% endblock %}

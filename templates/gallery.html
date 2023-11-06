@@ -22,14 +22,16 @@
 <style>
     .gallery-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(512px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
         gap: 10px;
+        padding: 20px; /* Padding around the grid */
         justify-content: center;
     }
     .gallery-item {
         width: 100%;
         cursor: pointer;
         transition: transform 0.3s ease;
+        margin-bottom: 10px; /* Space below each image */
     }
     .gallery-item.fullsize {
         position: fixed;
@@ -56,6 +58,39 @@
         background: rgba(0, 0, 0, 0.5);
         cursor: pointer;
         z-index: -1;
+    }
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        display: none;
+    }
+
+    .overlay-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 80%;
+        max-height: 80%;
+    }
+
+    .overlay img {
+        width: 100%;
+        height: auto;
+        display: block; /* Removes bottom space under the image */
+    }
+
+    /* Ensure that the full-size image is not too large on smaller screens */
+    @media (max-width: 768px) {
+        .gallery-item.fullsize {
+            width: 90%;
+            height: auto;
+        }
     }
 </style>
 {% endblock %}

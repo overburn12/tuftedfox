@@ -1,5 +1,6 @@
 import subprocess, json, os, requests, random
-from flask import Flask, render_template, request, jsonify, abort, Response, g
+from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory
+from werkzeug.utils import safe_join
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -12,8 +13,6 @@ app = Flask(__name__)
 load_dotenv()
 secret_password = os.getenv('SECRET_PASSWORD')
 app_start_time = int(datetime.utcnow().timestamp())
-images = {}
-images_404 = {}
 page_hits = {}
 
 #-------------------------------------------------------------------
@@ -32,37 +31,6 @@ def load_page_hits():
         return {}
 
 page_hits = load_page_hits()
-
-def load_images_to_memory():
-    image_folder = 'img/'
-    image_entries = os.listdir(image_folder)
-    images = {}
-
-    for entry in image_entries:
-        entry_path = os.path.join(image_folder, entry)
-        # Check if the entry is a file
-        if os.path.isfile(entry_path):
-            with open(entry_path, 'rb') as f:
-                images[entry] = f.read()
-
-    return images
-
-images = load_images_to_memory()
-
-def load_404_images_to_memory():
-    image_folder = 'img/404/'
-    image_entries = os.listdir(image_folder)
-    images = {}
-
-    for entry in image_entries:
-        entry_path = os.path.join(image_folder, entry)
-        # Check if the entry is a file
-        if os.path.isfile(entry_path):
-            with app.open_resource(entry_path, 'rb') as f:
-                images[entry] = f.read()
-    return images
-
-images_404 = load_404_images_to_memory()
 
 #-------------------------------------------------------------------
 # page count injection
@@ -99,7 +67,12 @@ def update_server():
 
 @app.route('/count')
 def count_page():
-    return render_template('count.html', page_hits=page_hits)
+    # Sort page_hits by hits in descending order
+    sorted_page_hits = sorted(page_hits.items(), key=lambda item: item[1], reverse=True)
+    # Convert the sorted list of tuples back into a dictionary
+    sorted_page_hits_dict = dict(sorted_page_hits)
+    # Pass the sorted dictionary to the template
+    return render_template('count.html', page_hits=sorted_page_hits_dict)
 
 @app.route('/order')
 def order_page():
@@ -107,7 +80,25 @@ def order_page():
 
 @app.route('/gallery')
 def gallery_page():
-    return render_template('gallery.html')
+    # Define the directory where the images are stored
+    rugs_folder = 'img/rugs'
+
+    # Initialize an empty list to hold the image URLs
+    image_urls = []
+
+    # Get the list of image file names
+    for image_name in os.listdir(rugs_folder):
+        # Check if it's a file and not a subdirectory
+        if os.path.isfile(os.path.join(rugs_folder, image_name)):
+            # Construct the URL for each image
+            image_url = f'/img/rugs/{image_name}'
+            image_urls.append(image_url)
+
+    # Generate the HTML for the image list
+    img_html = ''.join(f'<img src="{url}" style="width:512px;height:auto;"><br>' for url in image_urls)
+
+    # Pass the HTML to the template
+    return render_template('gallery.html', img_html=img_html)
 
 @app.route('/about')
 def about_tuftedfox():
@@ -117,36 +108,43 @@ def about_tuftedfox():
 # api routes
 #-------------------------------------------------------------------
 
-@app.route('/404.png')
-def serve_random_404_image():
-    #serve a random image as the 404.png   ill remove this later so the front end will choose the image
-    random_filename = random.choice(list(images_404.keys()))
-    return Response(images_404[random_filename], mimetype='image/png')
+@app.route('/favicon.ico')
+def favicon():
+    favicon_path = safe_join(app.root_path, 'img/icons/favicon.ico')
+    if not os.path.isfile(favicon_path):
+        abort(404)
+    return send_from_directory(os.path.join(app.root_path, 'img/icons'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-@app.route('/<path:image_name>')
-def serve_image(image_name):
-    name, extension = os.path.splitext(image_name)
-    mime_map = {
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.ico': 'image/x-icon',
-        '.gif': 'image/gif',
-    }  
-    mime_type = mime_map.get(extension.lower())
-    image_file = images.get(f'{name}{extension}')
+@app.route('/img/<folder>/<path:image_name>')
+def serve_image(folder, image_name):
+    # List of valid folders
+    valid_folders = ['404', 'rugs', 'icons']
     
-    if image_file and mime_type:
-        return Response(image_file, content_type=mime_type)
-    else:
-        abort(404)  # Return a 404 error if the image or MIME type is not found
+    # Check if the provided folder is valid
+    if folder not in valid_folders:
+        abort(404)
 
+    image_folder = safe_join('img', folder)
+    safe_image_path = safe_join(image_folder, image_name)
+    
+    if not os.path.isfile(safe_image_path):  # Check if the file exists and is a file
+        abort(404)
+
+    # Send the file from the directory, ensuring that the MIME type and other
+    # headers are handled correctly.
+    return send_from_directory(image_folder, image_name)
+
+#-------------------------------------------------------------------
+# Error handlers
 #-------------------------------------------------------------------
 
 @app.errorhandler(404)
 def page_not_found(e):
-    # note that we set the 404 status explicitly
-    return render_template('404.html'), 404
+    error_folder_path = os.path.join('img', '404')
+    error_images = os.listdir(error_folder_path)
+    random_image_name = random.choice(error_images)
+    image_path = f'/img/404/{random_image_name}'
+    return render_template('404.html', image_path=image_path), 404
 
 #-------------------------------------------------------------------
 

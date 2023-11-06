@@ -8,6 +8,10 @@
 <!-- Then include Panzoom -->
 <script src="https://unpkg.com/@panzoom/panzoom"></script>
 <style>
+    .page-content{
+        width: 90%;
+    }
+
     .gallery-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
@@ -119,12 +123,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="gallery-grid">
-    {% for thumbnail_url, image_url in image_data %}
-    <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}">
-    {% endfor %}
+<div class="page-content">
+    <div class="gallery-grid">
+        {% for thumbnail_url, image_url in image_data %}
+        <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}">
+        {% endfor %}
+    </div>
 </div>
-
 <div id="myModal" class="modal">
     <!-- Close button -->
     <span class="close">&times;</span>

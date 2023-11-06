@@ -3,9 +3,10 @@
 {% block title %}404: Not Found{% endblock %}
 
 {% block content %}
-    <div class="error-container" style="text-align: center; padding: 40px;">
-        <img src="{{ image_path }}" alt="404 Image" id="randomErrorImage" style="max-width: 70%; height: auto; margin-bottom: 30px;">
-        <h1>Oh no! The page you're looking for has scampered away.</h1>
-        <p style="margin-top: 15px;">We can't find the page you're looking for. Check the URL, or head back to safe ground.</p>
+    <div class="page-content">
+        <h2>404 Not Found</h2>
+        <img src="{{ image_path }}" alt="404 Image" id="randomErrorImage" style="max-width: 50%; height: auto;">
+        <h2>Oh no! The page you're looking for has scampered away.</h2>
+        <p>We can't find the page you're looking for. Check the URL, or head back to safe ground.</p>
     </div>
 {% endblock %}

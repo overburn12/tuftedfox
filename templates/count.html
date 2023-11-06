@@ -4,12 +4,26 @@
 
 {% block content %}
 <h2>Page Hits</h2>
-<table id="page_hits_table">
+<table class="hits_table">
     <tr>
         <th>Page</th>
         <th>Hits</th>
     </tr>
     {% for page, hits in page_hits.items() %}
+    <tr>
+        <td>{{ page }}</td>
+        <td>{{ hits }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Invalid Hits</h2>
+<table class="hits_table">
+    <tr>
+        <th>Page</th>
+        <th>Hits</th>
+    </tr>
+    {% for page, hits in page_hits_invalid.items() %}
     <tr>
         <td>{{ page }}</td>
         <td>{{ hits }}</td>

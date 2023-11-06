@@ -3,5 +3,59 @@
 {% block title %}TuftedFox - Gallery{% endblock %}
 
 {% block content %}
-    {{ img_html|safe }}
+<div class="gallery-grid">
+    {% for thumbnail_url, image_url in image_data %}
+    <img class="gallery-item" src="{{ thumbnail_url }}" data-fullsize="{{ image_url }}" onclick="toggleImage(this)">
+    {% endfor %}
+</div>
+
+<script>
+    // Function to toggle between thumbnail and full-size image
+    function toggleImage(imgElement) {
+        var fullSizeUrl = imgElement.getAttribute('data-fullsize');
+        var isThumbnail = imgElement.src !== fullSizeUrl;
+        imgElement.src = isThumbnail ? fullSizeUrl : imgElement.getAttribute('data-thumbnail-url');
+        imgElement.classList.toggle('fullsize');
+    }
+</script>
+
+<style>
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(512px, 1fr));
+        gap: 10px;
+        justify-content: center;
+    }
+    .gallery-item {
+        width: 100%;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    .gallery-item.fullsize {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: auto;
+        height: auto;
+        max-width: 90%;
+        max-height: 90%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+    }
+    .gallery-item:not(.fullsize):hover {
+        transform: scale(1.03);
+    }
+    /* Optional overlay when full-size image is displayed */
+    .gallery-item.fullsize:after {
+        content: '';
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        z-index: -1;
+    }
+</style>
 {% endblock %}

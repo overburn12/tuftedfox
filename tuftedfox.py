@@ -80,25 +80,26 @@ def order_page():
 
 @app.route('/gallery')
 def gallery_page():
-    # Define the directory where the images are stored
+    # Define the directories where the images and thumbnails are stored
     rugs_folder = 'img/rugs'
+    thumbnails_folder = 'img/thumbnails'
 
-    # Initialize an empty list to hold the image URLs
-    image_urls = []
+    # Initialize an empty list to hold the image URLs and thumbnail URLs
+    image_data = []
 
-    # Get the list of image file names
-    for image_name in os.listdir(rugs_folder):
-        # Check if it's a file and not a subdirectory
+    # Get the list of image file names and sort them alphabetically
+    image_names = sorted(os.listdir(rugs_folder))
+
+    # Construct the URLs for each image and its thumbnail
+    for image_name in image_names:
         if os.path.isfile(os.path.join(rugs_folder, image_name)):
-            # Construct the URL for each image
             image_url = f'/img/rugs/{image_name}'
-            image_urls.append(image_url)
+            thumbnail_url = f'/img/rugs/thumbnails/{image_name}'
+            image_data.append((thumbnail_url, image_url))
 
-    # Generate the HTML for the image list
-    img_html = ''.join(f'<img src="{url}" style="width:512px;height:auto;"><br>' for url in image_urls)
+    # Pass the image data to the template
+    return render_template('gallery.html', image_data=image_data)
 
-    # Pass the HTML to the template
-    return render_template('gallery.html', img_html=img_html)
 
 @app.route('/about')
 def about_tuftedfox():

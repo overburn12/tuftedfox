@@ -111,20 +111,29 @@ def count_page():
 def order_page():
     return render_template('order.html')
 
+import json
+
 @app.route('/gallery')
 def gallery_page():
     rugs_folder = 'img/rugs'
     thumbnails_folder = 'img/rugs/thumbnails'
-    image_data = []
-    image_names = sorted(os.listdir(rugs_folder))
 
-    for image_name in image_names:
-        if os.path.isfile(os.path.join(rugs_folder, image_name)):
-            image_url = f'{rugs_folder}/{image_name}'
-            thumbnail_url = f'{thumbnails_folder}/{image_name}'
-            image_data.append((thumbnail_url, image_url))
+    with open('data/imgs.json') as file:
+        images_info = json.load(file)
 
-    return render_template('gallery.html', image_data=image_data)
+    galleries_data = {}
+    for info in images_info:
+        category = info['category']
+        image_name = info['name']
+        comment = info['comment']
+        image_url = f'{rugs_folder}/{image_name}'
+        thumbnail_url = f'{thumbnails_folder}/{image_name}'
+
+        if category not in galleries_data:
+            galleries_data[category] = []
+        galleries_data[category].append((thumbnail_url, image_url, comment))
+
+    return render_template('gallery.html', galleries_data=galleries_data)
 
 
 @app.route('/about')

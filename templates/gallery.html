@@ -8,10 +8,10 @@
 <!-- Then include Panzoom -->
 <script src="https://unpkg.com/@panzoom/panzoom"></script>
 <style>
-    .page-content{
+   /* .page-content{
         width: 90%;
     }
-
+*/
     .gallery-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
@@ -123,13 +123,16 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-content">
-    <div class="gallery-grid">
-        {% for thumbnail_url, image_url in image_data %}
-        <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}">
-        {% endfor %}
+{% for category, images in galleries_data.items() %}
+    <div class="page-content">
+        <h2>{{ category | capitalize }}</h2> <!-- Category Heading -->
+        <div class="gallery-grid">
+            {% for thumbnail_url, image_url, comment in images %}
+            <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}" data-comment="{{ comment }}" onclick="loadView(this)">
+            {% endfor %}
+        </div>
     </div>
-</div>
+{% endfor %}
 <div id="myModal" class="modal">
     <!-- Close button -->
     <span class="close">&times;</span>
@@ -148,31 +151,28 @@
 </div>
 
 <script>
-    // Get the modal
     var modal = document.getElementById("myModal");
-    
-    // Get the image and insert it inside the modal - use its "alt" text as caption
     var modalImg = document.getElementById("img01");
     var captionText = document.getElementById("caption");
-    
-    document.querySelector('.gallery-grid').addEventListener('click', function(event) {
-        if (event.target.tagName === 'IMG') {
-            modal.style.display = "block";
-            modalImg.src = event.target.getAttribute('url-fullsize');
-            captionText.innerHTML = event.target.alt;
+    function loadView(imageElement) {
 
-            // Destroy previous instance if it exists
-            if (modalImg.panzoomInstance) {
-                modalImg.panzoomInstance.destroy();
-            }
+        modal.style.display = "block";
+        modalImg.src = imageElement.getAttribute('url-fullsize');
+        captionText.innerHTML = imageElement.getAttribute('data-comment');
 
-            // Initialize Panzoom
-            modalImg.panzoomInstance = Panzoom(modalImg, {
-                zoomSpeed: 0.065,
-                minZoom: 1
-            });
+        // Destroy previous Panzoom instance if it exists
+        if (modalImg.panzoomInstance) {
+            modalImg.panzoomInstance.destroy();
         }
-    });
+
+        // Initialize Panzoom
+        modalImg.panzoomInstance = Panzoom(modalImg, {
+            zoomSpeed: 0.065,
+            minZoom: 1
+        });
+
+        // The rest of the modal and zoom logic remains the same...
+    }
 
     // Get the <span> element that closes the modal
     var span = document.getElementsByClassName("close")[0];

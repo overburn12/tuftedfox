@@ -115,6 +115,7 @@ def load_images_for_category(category_path):
             comment = comments.get(image_name, "")  # Get comment if exists, else empty string
             images.append((thumbnail_path, image_path, comment))
 
+    images.sort(key=lambda x: os.path.basename(x[1]))
     return images
 
 def load_gallery_data(folder_path):

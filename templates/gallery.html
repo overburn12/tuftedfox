@@ -8,13 +8,14 @@
 <!-- Then include Panzoom -->
 <script src="https://unpkg.com/@panzoom/panzoom"></script>
 <style>
-   /* .page-content{
-        width: 90%;
+/*
+    .page-content{
+        width: 75%;
     }
 */
     .gallery-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
         gap: 10px;
         padding: 20px; /* Padding around the grid */
         justify-content: center;
@@ -119,35 +120,33 @@
         background-color: #e8e8e8;
     }
 </style>
-
 {% endblock %}
 
 {% block content %}
-{% for category, images in galleries_data.items() %}
-    <div class="page-content">
-        <h2>{{ category | capitalize }}</h2> <!-- Category Heading -->
-        <div class="gallery-grid">
-            {% for thumbnail_url, image_url, comment in images %}
-            <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}" data-comment="{{ comment }}" onclick="loadView(this)">
-            {% endfor %}
-        </div>
-    </div>
-{% endfor %}
-<div id="myModal" class="modal">
-    <!-- Close button -->
-    <span class="close">&times;</span>
 
-    <!-- Zoom controls -->
+{% for category, details in galleries_data.items() %}
+<div class="page-content">
+    <h2>{{ category | capitalize }}</h2>
+    {% if details.comment %}
+        <p class="category-comment">{{ details.comment }}</p>
+    {% endif %}
+    <div class="gallery-grid">
+        {% for thumbnail_url, image_url, comment in details.images %}
+            <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}" data-comment="{{ comment }}" onclick="loadView(this)">
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+
+
+<div id="myModal" class="modal">
+    <span class="close">&times;</span>
     <div class="zoom-controls">
         <button id="zoom-in-button">+</button>
         <button id="zoom-out-button">-</button>
     </div>
-
-    <!-- Image will be shown here -->
-    <img class="modal-content" id="img01">
-
-    <!-- Caption text -->
     <div id="caption"></div>
+    <img class="modal-content" id="img01">
 </div>
 
 <script>
@@ -159,25 +158,17 @@
         modal.style.display = "block";
         modalImg.src = imageElement.getAttribute('url-fullsize');
         captionText.innerHTML = imageElement.getAttribute('data-comment');
-
-        // Destroy previous Panzoom instance if it exists
         if (modalImg.panzoomInstance) {
             modalImg.panzoomInstance.destroy();
         }
-
-        // Initialize Panzoom
         modalImg.panzoomInstance = Panzoom(modalImg, {
             zoomSpeed: 0.065,
             minZoom: 1
         });
-
-        // The rest of the modal and zoom logic remains the same...
     }
 
-    // Get the <span> element that closes the modal
     var span = document.getElementsByClassName("close")[0];
 
-    // When the user clicks on <span> (x), close the modal
     span.onclick = function() {
         if (modalImg.panzoomInstance) {
             modalImg.panzoomInstance.destroy();
@@ -187,18 +178,18 @@
     }
 
     modalImg.addEventListener('wheel', function(e) {
-        e.preventDefault(); // Prevent the default scroll behavior
+        e.preventDefault(); 
         modalImg.panzoomInstance.zoomWithWheel(e);
     });
 
     document.getElementById('zoom-in-button').addEventListener('click', function() {
         modalImg.panzoomInstance.zoomIn();
-        });
+    });
 
     document.getElementById('zoom-out-button').addEventListener('click', function() {
         modalImg.panzoomInstance.zoomOut();
     });
 
-    </script>
+</script>
 
 {% endblock %}

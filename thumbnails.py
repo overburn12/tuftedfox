@@ -1,20 +1,43 @@
-from PIL import Image
 import os
+from PIL import Image
 
-def generate_thumbnails(directory, thumbnail_directory, size=(512, 512)):
-    if not os.path.exists(thumbnail_directory):
-        os.makedirs(thumbnail_directory)
+def generate_thumbnail(image_path, thumbnail_path, size=(128, 128)):
+    with Image.open(image_path) as img:
+        img.thumbnail(size)
+        img.save(thumbnail_path)
 
-    for image_name in os.listdir(directory):
-        image_path = os.path.join(directory, image_name)
-        if os.path.isfile(image_path):
-            with Image.open(image_path) as img:
-                img.thumbnail(size)
-                # Construct the path for the thumbnail
-                thumbnail_path = os.path.join(thumbnail_directory, image_name)
-                img.save(thumbnail_path)
+def check_all_thumbnails(dir_path, safe_extensions={'png', 'jpg', 'jpeg', 'bmp'}):
+    for root, dirs, files in os.walk(dir_path):
+        # Skip any thumbnails folders
+        if 'thumbnails' in dirs:
+            dirs.remove('thumbnails')
 
-# Call the function with the path to your images
-rugs_folder = 'img/rugs'
-thumbnails_folder = 'img/rugs/thumbnails'  # Make sure this directory exists or is created by the script
-generate_thumbnails(rugs_folder, thumbnails_folder)
+        thumbnail_directory = os.path.join(root, 'thumbnails')
+        image_files = [f for f in files if f.split('.')[-1].lower() in safe_extensions]
+
+        # Create thumbnail directory only if there are image files
+        if image_files and not os.path.exists(thumbnail_directory):
+            os.makedirs(thumbnail_directory)
+
+        existing_thumbnails = set(os.listdir(thumbnail_directory)) if os.path.exists(thumbnail_directory) else set()
+        parent_images = set()
+
+        for file in image_files:
+            image_path = os.path.join(root, file)
+            thumbnail_path = os.path.join(thumbnail_directory, file)
+            parent_images.add(file)
+
+            if not os.path.exists(thumbnail_path):
+                generate_thumbnail(image_path, thumbnail_path)
+
+        # Remove thumbnails without a parent image
+        for thumbnail in existing_thumbnails:
+            if thumbnail not in parent_images:
+                os.remove(os.path.join(thumbnail_directory, thumbnail))
+
+        # Delete the thumbnail directory if empty
+        if os.path.exists(thumbnail_directory) and not parent_images:
+            os.rmdir(thumbnail_directory)
+
+# Usage
+check_all_thumbnails('img/')

@@ -60,7 +60,7 @@ def generate_thumbnail(image_path, thumbnail_path, size=(256, 256)):
         img.thumbnail(size)
         img.save(thumbnail_path)
 
-def check_all_thumbnails(dir_path, safe_extensions={'png', 'jpg', 'jpeg', 'bmp'}):
+def check_all_thumbnails(dir_path, safe_extensions={'png', 'jpg', 'jpeg'}):
     for root, dirs, files in os.walk(dir_path):
         # Skip any thumbnails folders
         if 'thumbnails' in dirs:
@@ -92,6 +92,66 @@ def check_all_thumbnails(dir_path, safe_extensions={'png', 'jpg', 'jpeg', 'bmp'}
         # Delete the thumbnail directory if empty
         if os.path.exists(thumbnail_directory) and not parent_images:
             os.rmdir(thumbnail_directory)
+
+def load_images_for_category(category_path):
+    allowed_extensions = ['jpg', 'jpeg', 'png']
+    images = []
+
+    thumbnails_folder = os.path.join(category_path, 'thumbnails')
+    comments_path = os.path.join(category_path, 'comments.json')
+    comments = {}
+
+    if os.path.exists(comments_path):
+        with open(comments_path) as file:
+            comments_data = json.load(file)
+            for item in comments_data:
+                comments[item['filename']] = item['comment']
+
+    for image_name in os.listdir(category_path):
+        if image_name != 'thumbnails' and image_name.split('.')[-1].lower() in allowed_extensions:
+            image_path = os.path.join(category_path, image_name)
+            thumbnail_path = os.path.join(thumbnails_folder, image_name)
+            
+            comment = comments.get(image_name, "")  # Get comment if exists, else empty string
+            images.append((thumbnail_path, image_path, comment))
+
+    return images
+
+def load_gallery_data(folder_path):
+    order_file_path = os.path.join(folder_path, 'order.json')
+    order_data = []
+
+    # Check if order.json exists and load its content
+    if os.path.exists(order_file_path):
+        with open(order_file_path) as file:
+            order_data = json.load(file)
+
+    galleries_data = {}
+    processed_categories = set()
+
+    # Process categories as per order.json
+    for entry in order_data:
+        sub_directory = entry['path']
+        category_name = entry['category']
+        category_comment = entry.get('comment', '')
+        category_path = os.path.join(folder_path, sub_directory)
+
+        if os.path.isdir(category_path):
+            processed_categories.add(sub_directory)
+            galleries_data[category_name] = {
+                'images': load_images_for_category(category_path),
+                'comment': category_comment
+            }
+
+    # Process remaining directories not mentioned in order.json
+    for sub_directory in os.listdir(folder_path):
+        if sub_directory not in processed_categories and os.path.isdir(os.path.join(folder_path, sub_directory)):
+            galleries_data[sub_directory] = {
+                'images': load_images_for_category(os.path.join(folder_path, sub_directory)),
+                'comment': ''
+            }
+
+    return galleries_data
 
 #-------------------------------------------------------------------
 # page count injection
@@ -163,108 +223,13 @@ def count_page():
                            page_hits=sorted_page_hits_dict,
                            page_hits_invalid=sorted_page_hits_invalid_dict)
 
-
 @app.route('/order')
 def order_page():
     return render_template('order.html')
 
-def load_gallery_data_worksbutold(folder_path):
-    galleries_data = {}
-    allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff']
-
-    for category in os.listdir(folder_path):
-        category_path = os.path.join(folder_path, category)
-        
-        if os.path.isdir(category_path):
-            galleries_data[category] = []
-
-            # Check for comments.json file in the category directory
-            comments_path = os.path.join(category_path, 'comments.json')
-            comments = {}
-            if os.path.exists(comments_path):
-                with open(comments_path) as file:
-                    comments_data = json.load(file)
-                    for item in comments_data:
-                        comments[item['filename']] = item['comment']
-
-            thumbnails_folder = os.path.join(category_path, 'thumbnails')
-
-            for image_name in os.listdir(category_path):
-                if image_name != 'thumbnails' and image_name.split('.')[-1].lower() in allowed_extensions:
-                    image_path = os.path.join(category_path, image_name)
-                    thumbnail_path = os.path.join(thumbnails_folder, image_name)
-                    
-                    comment = comments.get(image_name, "")  # Get comment if exists, else empty string
-                    galleries_data[category].append((thumbnail_path, image_path, comment))
-
-    return galleries_data
-
-def load_gallery_data(folder_path):
-    allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff']
-    order_file_path = os.path.join(folder_path, 'order.json')
-    order_data = []
-
-    # Check if order.json exists and load its content
-    if os.path.exists(order_file_path):
-        with open(order_file_path) as file:
-            order_data = json.load(file)
-
-    galleries_data = {}
-    processed_categories = set()
-
-    # Process categories as per order.json
-    for entry in order_data:
-        sub_directory = entry['path']
-        category_name = entry['category']
-        category_comment = entry.get('comment', '')
-        category_path = os.path.join(folder_path, sub_directory)
-
-        if os.path.isdir(category_path):
-            processed_categories.add(sub_directory)
-            galleries_data[category_name] = {
-                'images': load_images_for_category(category_path),
-                'comment': category_comment
-            }
-
-    # Process remaining directories not mentioned in order.json
-    for sub_directory in os.listdir(folder_path):
-        if sub_directory not in processed_categories and os.path.isdir(os.path.join(folder_path, sub_directory)):
-            galleries_data[sub_directory] = {
-                'images': load_images_for_category(os.path.join(folder_path, sub_directory)),
-                'comment': ''
-            }
-
-    return galleries_data
-
-def load_images_for_category(category_path):
-    allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff']
-    images = []
-
-    thumbnails_folder = os.path.join(category_path, 'thumbnails')
-    comments_path = os.path.join(category_path, 'comments.json')
-    comments = {}
-
-    if os.path.exists(comments_path):
-        with open(comments_path) as file:
-            comments_data = json.load(file)
-            for item in comments_data:
-                comments[item['filename']] = item['comment']
-
-    for image_name in os.listdir(category_path):
-        if image_name != 'thumbnails' and image_name.split('.')[-1].lower() in allowed_extensions:
-            image_path = os.path.join(category_path, image_name)
-            thumbnail_path = os.path.join(thumbnails_folder, image_name)
-            
-            comment = comments.get(image_name, "")  # Get comment if exists, else empty string
-            images.append((thumbnail_path, image_path, comment))
-
-    return images
-
 @app.route('/gallery')
 def gallery_page():
     galleries_data = load_gallery_data('img/rugs')
-    with open('data/gallery_data.json', 'w') as f:
-        json.dump(galleries_data, f)
     return render_template('gallery.html', galleries_data=galleries_data)
 
 @app.route('/render')

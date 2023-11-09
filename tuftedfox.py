@@ -81,8 +81,8 @@ def check_all_thumbnails(dir_path, safe_extensions={'png', 'jpg', 'jpeg', 'bmp'}
             thumbnail_path = os.path.join(thumbnail_directory, file)
             parent_images.add(file)
 
-            if not os.path.exists(thumbnail_path):
-                generate_thumbnail(image_path, thumbnail_path)
+            #if not os.path.exists(thumbnail_path):
+            generate_thumbnail(image_path, thumbnail_path)
 
         # Remove thumbnails without a parent image
         for thumbnail in existing_thumbnails:

@@ -150,18 +150,19 @@ def update_server():
 
 @app.route('/count')
 def count_page():
-    # Sort the valid page hits
-    sorted_page_hits = sorted(page_hits.items(), key=lambda item: item[1], reverse=True)
+    # Sort the valid page hits alphabetically by path name
+    sorted_page_hits = sorted(page_hits.items(), key=lambda item: item[0])
     sorted_page_hits_dict = dict(sorted_page_hits)
 
-    # Sort the invalid page hits
-    sorted_page_hits_invalid = sorted(page_hits_invalid.items(), key=lambda item: item[1], reverse=True)
+    # Sort the invalid page hits alphabetically by path name
+    sorted_page_hits_invalid = sorted(page_hits_invalid.items(), key=lambda item: item[0])
     sorted_page_hits_invalid_dict = dict(sorted_page_hits_invalid)
 
     # Pass both dictionaries to the template
     return render_template('count.html',
                            page_hits=sorted_page_hits_dict,
                            page_hits_invalid=sorted_page_hits_invalid_dict)
+
 
 @app.route('/order')
 def order_page():

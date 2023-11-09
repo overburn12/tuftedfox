@@ -2,6 +2,33 @@
 
 {% block title %}TuftedFox - Page Hits{% endblock %}
 
+{% block head %}
+<style>
+    /* Styles for the table on /count page */
+    .hits_table {
+    margin: 0 auto; /* Centers the table */
+    width: 500px; /* Adjust width as needed */
+    border-collapse: collapse; /* Removes space between table cells */
+    background: #FAF8F5; /* Background color */
+    }
+
+    .hits_table th, .hits_table td {
+    border: 1px solid #3E4E50; /* Border color */
+    padding: 10px; /* Spacing inside cells */
+    text-align: center; /* Center-align text */
+    }
+
+    .hits_table th {
+    background: #3E4E50; /* Header background color */
+    color: antiquewhite; /* Header text color */
+    }
+
+    .hits_table td {
+    color: #333333; /* Cell text color */
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-content">
     <h2>Page Hits</h2>

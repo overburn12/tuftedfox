@@ -71,31 +71,12 @@ body {
   border-radius: 10px;
   padding-left: 30px;
   padding-right: 30px;
-  padding-bottom: 10px;
-  padding-top: 10px;
+  padding-bottom: 30px;
+  padding-top: 0px;
 }
 
-/* Styles for the table on /count page */
-.hits_table {
-  margin: 0 auto; /* Centers the table */
-  width: 500px; /* Adjust width as needed */
-  border-collapse: collapse; /* Removes space between table cells */
-  background: #FAF8F5; /* Background color */
-}
-
-.hits_table th, .hits_table td {
-  border: 1px solid #3E4E50; /* Border color */
-  padding: 10px; /* Spacing inside cells */
-  text-align: center; /* Center-align text */
-}
-
-.hits_table th {
-  background: #3E4E50; /* Header background color */
-  color: antiquewhite; /* Header text color */
-}
-
-.hits_table td {
-  color: #333333; /* Cell text color */
+p{
+  margin: 0px;
 }
 
 a {

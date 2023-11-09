@@ -282,8 +282,11 @@ def page_not_found(e):
     image_path = f'/img/404/{random_image_name}'
     return render_template('404.html', image_path=image_path), 404
 
-
 #-------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8081)
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 8081))
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.debug = debug
+    app.run(host=host, port=port)

@@ -4,28 +4,22 @@
 
 {% block content %}
 <div class="page-content">
-    <h2>Update Server</h2>
-    <form action="{{ url_for('update_server') }}" method="post" onsubmit="savePassword(event)">
-        <label for="secret_word">Password:</label>
-        <input type="password" id="secret_word" name="secret_word" required>
-        <input type="submit" value="Update Server">
-    </form>
-</div>
-<div class="page-content">
-    <h2>Update Thumbnails</h2>
-    <form action="/thumbnail_everything" method="post" onsubmit="savePassword(event)">
-        <label for="secret_word">Password:</label>
-        <input type="password" id="secret_word" name="secret_word" required>
-        <input type="submit" value="Update Thumbnails">
-    </form>
-</div>
-<div class="page-content">
     <h2>Uptime</h2>
     <p id="uptime"></p>
 </div>
 <div class="page-content">
+    <h2>Update</h2>
+    <form onsubmit="savePassword(event)">
+        <label for="secret_word">Password:</label>
+        <input type="password" id="secret_word" name="secret_word" required>
+        <br><br>
+        <input type="submit" formaction="/update" value="Update Server">
+        <input type="submit" formaction="/thumbnail_everything" value="Update Thumbnails">
+    </form>
+</div>
+<div class="page-content">
     <h2>Log</h2>
-    <pre><code>{{ log_content }}</code></pre>
+    <center><pre><code>{{ log_content }}</code></pre></center>
     Server birthdate: 11/3/2023
 </div>
 

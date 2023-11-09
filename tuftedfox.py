@@ -55,7 +55,7 @@ def load_page_hits():
 
 page_hits, page_hits_invalid = load_page_hits()
 
-def generate_thumbnail(image_path, thumbnail_path, size=(128, 128)):
+def generate_thumbnail(image_path, thumbnail_path, size=(256, 256)):
     with Image.open(image_path) as img:
         img.thumbnail(size)
         img.save(thumbnail_path)

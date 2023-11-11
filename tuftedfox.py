@@ -183,7 +183,7 @@ def before_request():
         app.url_map.bind('').match(page)
 
         # Check if the request is for an image
-        if page.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+        if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
             # Track image hits
             page_hits_images[page] = page_hits_images.get(page, 0) + 1
         else:

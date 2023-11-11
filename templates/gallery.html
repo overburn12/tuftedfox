@@ -20,11 +20,20 @@
         gap: 10px;
         justify-content: center;
     }
+    .gallery-cell{
+        justify-content: center;
+        align-items: center;
+        vertical-align: top;
+        margin: 20px;
+        align-self: flex-start;
+        overflow: hidden;
+        display: inline-block;
+        border-radius: 10px;
+    }
     .gallery-item {
         width: 100%;
         cursor: pointer;
         transition: transform 0.3s ease;
-        margin-bottom: 10px; /* Space below each image */
     }
 
     .modal {
@@ -131,13 +140,15 @@
         <h2>{{ category | capitalize }}</h2>
         <img src="{{ random_icon }}" class="icon-right">
         {% if details.comment %}
+    </div>
+    <div class="element-header">
         <p class="category-comment">{{ details.comment }}</p>
-        <img src="{{ random_icon }}" class="icon-right">
         {% endif %}
     </div>
     <div class="element-content">
         <div class="gallery-grid">
             {% for thumbnail_url, image_url, comment in details.images %}
+            
             <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}" data-comment="{{ comment }}" onclick="loadView(this)">
             {% endfor %}
         </div>

@@ -1,27 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}TuftedFox - Update Server{% endblock %}
+{% block title %}
+    TuftedFox - Update Server
+{% endblock %}
 
 {% block content %}
-<div class="page-content">
-    <h2>Uptime</h2>
-    <p id="uptime"></p>
-</div>
-<div class="page-content">
-    <h2>Update</h2>
-    <form method="post">
-        <label for="secret_word">Password:</label>
-        <input type="password" id="secret_word" name="secret_word" required>
 
-        <input type="submit" value="Update Server" onclick="this.form.action='/update';">
-        <input type="submit" value="Update Thumbnails" onclick="this.form.action='/thumbnail_everything';">
-    </form>
-</div>
-<div class="page-content">
-    <h2>Log</h2>
-    <center><pre><code>{{ log_content }}</code></pre></center>
-    Server birthdate: 11/3/2023
-</div>
+    {{ element_block_safe('Uptime', random_icon, 
+        '<p id="uptime"></p>' | safe
+    ) }}
+
+    <div class="element-block">
+        <div class="element-header">
+            <img class="icon-left" src="{{ random_icon }}">
+            <h2>Update</h2>
+            <img class="icon-right" src="{{ random_icon }}">
+        </div>
+        <div class="element-content">
+            <form method="post">
+                <label for="secret_word">Password:</label>
+                <input type="password" id="secret_word" name="secret_word" required>
+                <input type="submit" value="Update Server" onclick="this.form.action='/update';">
+                <input type="submit" value="Update Thumbnails" onclick="this.form.action='/thumbnail_everything';">
+            </form>
+        </div>
+    </div>
+
+    {{ element_block_safe('Log', random_icon, 
+        ('<center><pre><code>' ~ log_content ~ '</code></pre></center>' ~
+        'Server birthdate: 11/3/2023')|safe
+    ) }}
 
     <script>
         function savePassword(event) {
@@ -65,4 +73,5 @@
         calculateUptime();
         setInterval(calculateUptime, 1000); // Update uptime every second
     </script>
+
 {% endblock %}

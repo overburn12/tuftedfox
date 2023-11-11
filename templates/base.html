@@ -1,3 +1,85 @@
+{% set icons = [
+  'img/icons/set01_coffee_01.png',
+  'img/icons/set01_leaf_01.png',
+  'img/icons/set01_leaf_02.png',
+  'img/icons/set01_leaf_03.png',
+  'img/icons/set01_leaf_04.png',
+  'img/icons/set01_leaf_05.png',
+  'img/icons/set01_mushroom_01.png',
+  'img/icons/set01_mushroom_02.png',
+  'img/icons/set01_mushroom_03.png',
+  'img/icons/set01_pumpkin_01.png',
+  'img/icons/set01_pumpkin_02.png',
+  'img/icons/set02_acorn_01.png',
+  'img/icons/set02_fox_01.png',
+  'img/icons/set02_fox_02.png',
+  'img/icons/set02_leaf_01.png',
+  'img/icons/set02_leaf_02.png',
+  'img/icons/set02_leaf_03.png',
+  'img/icons/set02_leaf_04.png',
+  'img/icons/set02_leaf_05.png',
+  'img/icons/set02_leaf_06.png',
+  'img/icons/set02_mushroom_01.png',
+  'img/icons/set02_mushroom_02.png',
+  'img/icons/set02_mushroom_03.png',
+  'img/icons/set03_acorn_01.png',
+  'img/icons/set03_block_01.png',
+  'img/icons/set03_fox_01.png',
+  'img/icons/set03_fox_02.png',
+  'img/icons/set03_leaf_01.png',
+  'img/icons/set03_leaf_02.png',
+  'img/icons/set03_leaf_03.png',
+  'img/icons/set03_leaf_04.png',
+  'img/icons/set03_leaf_05.png',
+  'img/icons/set03_leaf_06.png',
+  'img/icons/set03_leaf_07.png',
+  'img/icons/set03_leaf_08.png',
+  'img/icons/set03_leaf_09.png',
+  'img/icons/set03_leaf_10.png',
+  'img/icons/set03_leaf_11.png',
+  'img/icons/set03_leaf_12.png',
+  'img/icons/set03_leaf_13.png',
+  'img/icons/set03_leaf_14.png',
+  'img/icons/set03_mushroom_01.png',
+  'img/icons/set03_mushroom_02.png',
+  'img/icons/set03_mushroom_03.png',
+  'img/icons/set03_mushroom_04.png',
+  'img/icons/set03_mushroom_05.png',
+  'img/icons/set03_mushroom_06.png'
+  ]
+%}
+
+
+{% set random_icon = icons|random %}
+
+{% macro element_block(header, icon_path, content) %}
+  <div class="element-block">
+      <div class="element-header">
+          <img class="icon-left" src="{{ icon_path }}">
+          <h2>{{ header }}</h2>
+          <img class="icon-right" src="{{ icon_path }}">
+      </div>
+      <div class="element-content">
+          <p>
+              {{ content }}
+          </p>    
+      </div>
+  </div>
+{% endmacro %}
+
+{% macro element_block_safe(header, icon_path, content) %}
+  <div class="element-block">
+      <div class="element-header">
+          <img class="icon-left" src="{{ icon_path }}">
+          <h2>{{ header }}</h2>
+          <img class="icon-right" src="{{ icon_path }}">
+      </div>
+      <div class="element-content">
+          {{ content }} 
+      </div>
+  </div>
+{% endmacro %}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,7 +95,7 @@
       <a href="/">Home</a> &bull;
       <a href="/gallery">Gallery</a> &bull;
       <a href="/render">Renders</a> &bull;
-      <a href="/order">Custom</a>
+      <a href="/custom">Custom</a>
     </div>
   </div>
   <div id="content">

@@ -1,12 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %}404: Not Found{% endblock %}
+{% block title %}
+    404: Not Found
+{% endblock %}
+
+{% block head %}
+    <style>
+        #not-found{
+            width: 50%;
+            height: auto;
+            padding: 20px;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
-    <div class="page-content">
-        <h2>404 Not Found</h2>
-        <img src="{{ image_path }}" alt="404 Image" id="randomErrorImage" style="max-width: 50%; height: auto;">
-        <h2>Oh no! The page you're looking for has scampered away.</h2>
-        <p>We can't find the page you're looking for. Check the URL, or head back to safe ground.</p>
+
+    <div class="element-block">
+        <div class="element-header">
+            <img class="icon-left" src="{{ random_icon }}">
+            <h2>404 Not Found</h2>
+            <img class="icon-right" src="{{ random_icon }}">
+        </div>
+        <div class="element-content">
+            <img src="{{ image_path }}" id="not-found"><h2>Oh no! The page you're looking for has scampered away.</h2>
+            <p>We can't find the page you're looking for. Check the URL, or head back to safe ground.</p>
+        </div>
     </div>
+
 {% endblock %}

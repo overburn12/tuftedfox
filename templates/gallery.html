@@ -30,7 +30,7 @@
     .modal {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        z-index: 1; /* Sit on top */
+        z-index: 9090; /* Sit on top */
         padding-top: 100px; /* Location of the box */
         left: 0;
         top: 0;
@@ -125,19 +125,25 @@
 {% block content %}
 
 {% for category, details in galleries_data.items() %}
-<div class="page-content">
-    <h2>{{ category | capitalize }}</h2>
-    {% if details.comment %}
+<div class="element-block">
+    <div class="element-header">
+        <img src="{{ random_icon }}" class="icon-left">
+        <h2>{{ category | capitalize }}</h2>
+        <img src="{{ random_icon }}" class="icon-right">
+        {% if details.comment %}
         <p class="category-comment">{{ details.comment }}</p>
-    {% endif %}
-    <div class="gallery-grid">
-        {% for thumbnail_url, image_url, comment in details.images %}
+        <img src="{{ random_icon }}" class="icon-right">
+        {% endif %}
+    </div>
+    <div class="element-content">
+        <div class="gallery-grid">
+            {% for thumbnail_url, image_url, comment in details.images %}
             <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}" data-comment="{{ comment }}" onclick="loadView(this)">
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endfor %}
-
 
 <div id="myModal" class="modal">
     <span class="close">&times;</span>

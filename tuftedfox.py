@@ -18,6 +18,7 @@ load_dotenv()
 secret_password = os.getenv('SECRET_PASSWORD')
 app_start_time = int(datetime.utcnow().timestamp())
 page_hits = {}
+page_hits_images = {}
 page_hits_invalid = {}
 
 #-------------------------------------------------------------------
@@ -30,7 +31,11 @@ def save_page_hits():
             json.dump(page_hits, f)
     except IOError as e:
         print(f"An error occurred while saving valid page hits: {e}")
-
+    try:
+        with open('data/page_hits_images.json', 'w') as f:
+            json.dump(page_hits_images, f)
+    except IOError as e:
+        print(f"An error occurred while saving valid image hits: {e}")
     try:
         with open('data/page_hits_invalid.json', 'w') as f:
             json.dump(page_hits_invalid, f)
@@ -40,20 +45,26 @@ def save_page_hits():
 def load_page_hits():
     tmp_hits = {}
     tmp_invalid = {}
+    tmp_img_hits = {}
     try:
         with open('data/page_hits.json', 'r') as f:
             tmp_hits = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         tmp_hits = {}
     try:
+        with open('data/page_hits_images.json', 'r') as f:
+            tmp_img_hits = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        tmp_img_hits = {}
+    try:
         with open('data/page_hits_invalid.json', 'r') as f:
             tmp_invalid = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         tmp_invalid = {}
         
-    return tmp_hits, tmp_invalid
+    return tmp_hits, tmp_img_hits, tmp_invalid
 
-page_hits, page_hits_invalid = load_page_hits()
+page_hits, page_hits_images, page_hits_invalid = load_page_hits()
 
 def generate_thumbnail(image_path, thumbnail_path, size=(256, 256)):
     with Image.open(image_path) as img:
@@ -160,7 +171,7 @@ def load_gallery_data(folder_path):
 
 @app.before_request
 def before_request():
-    global page_hits, page_hits_invalid
+    global page_hits, page_hits_images, page_hits_invalid
     page = request.path
 
     # Skip tracking for any path containing 'thumbnail'
@@ -170,8 +181,14 @@ def before_request():
     try:
         # Try to match the request path to the URL map
         app.url_map.bind('').match(page)
-        # If the above line doesn't raise an exception, the route is valid
-        page_hits[page] = page_hits.get(page, 0) + 1
+
+        # Check if the request is for an image
+        if page.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+            # Track image hits
+            page_hits_images[page] = page_hits_images.get(page, 0) + 1
+        else:
+            # Track other valid hits
+            page_hits[page] = page_hits.get(page, 0) + 1
     except (NotFound, RequestRedirect):
         # If the route is not found or a redirect, consider it invalid
         page_hits_invalid[page] = page_hits_invalid.get(page, 0) + 1
@@ -192,7 +209,7 @@ def do_the_thumbnails():
     if request.method == 'POST':
         if request.form.get('secret_word') == secret_password:
             check_all_thumbnails('img/')
-            return '<html>the thumbnail cleaning is done!</html>'
+            return '<html>the thumbnail creation is done!</html>'
         else:
             return '<html>wrong secret password!</html>'
     else:
@@ -211,22 +228,27 @@ def update_server():
 
 @app.route('/count')
 def count_page():
-    # Sort the valid page hits alphabetically by path name
+    # Sort the valid page hits (excluding images) alphabetically by path name
     sorted_page_hits = sorted(page_hits.items(), key=lambda item: item[0])
     sorted_page_hits_dict = dict(sorted_page_hits)
+
+    # Sort the image page hits alphabetically by path name
+    sorted_page_hits_images = sorted(page_hits_images.items(), key=lambda item: item[0])
+    sorted_page_hits_images_dict = dict(sorted_page_hits_images)
 
     # Sort the invalid page hits alphabetically by path name
     sorted_page_hits_invalid = sorted(page_hits_invalid.items(), key=lambda item: item[0])
     sorted_page_hits_invalid_dict = dict(sorted_page_hits_invalid)
 
-    # Pass both dictionaries to the template
+    # Pass all three dictionaries to the template
     return render_template('count.html',
                            page_hits=sorted_page_hits_dict,
+                           page_hits_images=sorted_page_hits_images_dict,
                            page_hits_invalid=sorted_page_hits_invalid_dict)
 
-@app.route('/order')
+@app.route('/custom')
 def order_page():
-    return render_template('order.html')
+    return render_template('custom.html')
 
 @app.route('/gallery')
 def gallery_page():
@@ -237,10 +259,6 @@ def gallery_page():
 def render_page():
     galleries_data = load_gallery_data('img/ai')
     return render_template('gallery.html', galleries_data=galleries_data)
-
-@app.route('/about')
-def about_tuftedfox():
-    return render_template('about.html')
 
 #-------------------------------------------------------------------
 # api routes

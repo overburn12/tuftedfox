@@ -11,6 +11,7 @@ body {
 }
 
 #header {
+  z-index: 9001;
   position: fixed;
   top: 0;
   width: 100%;
@@ -75,6 +76,7 @@ body {
   padding-top: 20px;
 }
 
+
 h2{
   padding-top: 0px;
   padding-bottom: 10px;
@@ -113,4 +115,41 @@ pre{
   font-size: 14px;
   color: #f5f5f5;
   text-align: left;
+}
+
+.element-block{
+  margin-top: 40px;
+  width: 900px;
+  background-color: white;
+  border-radius: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+  padding-top: 10px;
+}
+.element-header {
+  display: flex;
+  justify-content: center; /* Centers items horizontally */
+  align-items: center;     /* Centers items vertically */
+  width: 100%;             /* Ensures it fills the width */
+}
+
+.icon-left{
+  padding-left: 10px;
+  padding-right: 10px;
+  margin: 0px;
+  max-height: 30px;
+  width: auto;
+}
+.icon-right{
+  padding-left: 10px;
+  padding-right: 10px;
+  margin: 0px;
+  max-height: 30px;
+  width: auto;
+  transform: scaleX(-1);
+}
+
+.element-header > h2{
+  padding-top: 10px;
 }

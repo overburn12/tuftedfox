@@ -6,72 +6,58 @@
 
 {% block content %}
 
-    {{ element_block_safe('Uptime', random_icon, 
-        '<p id="uptime"></p>' | safe
-    ) }}
+    {{ block_header('Uptime', random_icon)}} 
+        <p id="uptime"></p>
+    {{ block_footer() }}
 
-    <div class="element-block">
-        <div class="element-header">
-            <img class="icon-left" src="{{ random_icon }}">
-            <h2>Update</h2>
-            <img class="icon-right" src="{{ random_icon }}">
-        </div>
-        <div class="element-content">
-            <form method="post">
-                <label for="secret_word">Password:</label>
-                <input type="password" id="secret_word" name="secret_word" required>
-                <input type="submit" value="Update Server" onclick="this.form.action='/update';">
-                <input type="submit" value="Update Thumbnails" onclick="this.form.action='/thumbnail_everything';">
-            </form>
-        </div>
-    </div>
+    {{ block_header('Update', random_icon)}}
+        <form method="post">
+            <label for="secret_word">Password:</label>
+            <input type="password" id="secret_word" name="secret_word" required>
+            <input type="submit" value="Update Server" onclick="this.form.action='/update';">
+            <input type="submit" value="Update Thumbnails" onclick="this.form.action='/thumbnail_everything';">
+        </form>
+    {{ block_footer() }}
 
-    {{ element_block_safe('Log', random_icon, 
-        ('<center><pre><code>' ~ log_content ~ '</code></pre></center>' ~
-        'Server birthdate: 11/3/2023')|safe
-    ) }}
+    {{ block_header('Log', random_icon)}} 
+        <center><pre><code> {{ log_content }} </code></pre></center>
+        <p>Server birthdate: 11/3/2023</p>
+    {{ block_footer() }}
 
     <script>
         function savePassword(event) {
             event.preventDefault(); // Prevent form submission
-
-            // Get the entered password
             var secretWordInput = document.getElementById("secret_word");
             var secretWord = secretWordInput.value;
-
-            // Save the entered password to localStorage
             localStorage.setItem("secretWord", secretWord);
-
-            // Submit the form
             event.target.submit();
         }
 
-        // Load password from localStorage when the page loads
         window.addEventListener("load", function(){
             var secretWordInput = document.getElementById("secret_word");
             var savedSecretWord = localStorage.getItem("secretWord");
-
             if (savedSecretWord) {
                 secretWordInput.value = savedSecretWord;
             }
         });
 
-        // Calculate server uptime
         function calculateUptime() {
-            var startTime = new Date('{{ app_start_time }}' * 1000);  // JavaScript expects milliseconds since epoch
-            var now = new Date();
-            var currentTime = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds()));
-            var uptime = currentTime - startTime;
-            var days = Math.floor(uptime / (1000 * 60 * 60 * 24));
-            var hours = Math.floor(uptime % (1000 * 60 * 60 * 24) / (1000 * 60 * 60));
-            var minutes = Math.floor(uptime % (1000 * 60 * 60) / (1000 * 60));
-            var seconds = Math.floor(uptime % (1000 * 60) / 1000);
+            var startTime = new Date('{{ app_start_time }}' * 1000);
+            var uptime = new Date() - startTime;
+            var seconds = Math.floor(uptime / 1000);
+            var minutes = Math.floor(seconds / 60);
+            var hours = Math.floor(minutes / 60);
+            var days = Math.floor(hours / 24);
 
-            document.getElementById('uptime').innerHTML = days + ' days, ' + hours + ' hours, ' + minutes + ' minutes, ' + seconds + ' seconds';
+            seconds = seconds % 60;
+            minutes = minutes % 60;
+            hours = hours % 24;
+
+            document.getElementById('uptime').innerHTML = `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
         }
 
         calculateUptime();
-        setInterval(calculateUptime, 1000); // Update uptime every second
+        setInterval(calculateUptime, 1000); 
     </script>
 
 {% endblock %}

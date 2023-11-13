@@ -3,38 +3,45 @@
 {% block title %}TuftedFox - Gallery{% endblock %}
 
 {% block head %}
-<!-- Include jQuery first if it's a dependency -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<!-- Then include Panzoom -->
-<script src="https://unpkg.com/@panzoom/panzoom"></script>
-<style>
-/*
-    .page-content{
-        width: 75%;
+    <style>
+    .series-indicator {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 17px; /* Size of the icon */
+        height: 22px;
+        background-image: url('img/icons/multi.png'); /* Path to your icon image */
+        background-size: cover;
+    }   
+
+    .gallery-grid {
+        padding-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+        grid-auto-rows: auto; /* Adjust based on your design */
+        gap: 10px;
+        justify-content: center;
     }
-*/
-.gallery-grid {
-    padding-top: 10px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
-    grid-auto-rows: auto; /* Adjust based on your design */
-    gap: 10px;
-    justify-content: center;
-}
+    
+    {% if gallery_size == 'large' %}
+        .gallery-grid {
+            grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
+        }
+    {% endif %}
 
-.gallery-item {
-    width: 100%;
-    height: auto; /* Adjust height automatically */
-    object-fit: cover; /* Maintain aspect ratio */
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    border-radius: 10px;
-}
-
-.gallery-item:hover {
-    transform: scale(1.1); /* Zoom effect on hover */
-}
-
+    .gallery-item {
+        width: 100%;
+        height: auto; /* Adjust height automatically */
+        object-fit: cover; /* Maintain aspect ratio */
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        border-radius: 10px;
+    }
+    
+    .gallery-item:hover {
+        transform: scale(1.1); /* Zoom effect on hover */
+    }
+    
     .modal {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
@@ -48,14 +55,14 @@
         background-color: rgb(0,0,0); /* Fallback color */
         background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
     }
-
+    
     .modal-content {
         margin: auto;
         display: block;
         width: 80%;
         max-width: 700px;
     }
-
+    
     #caption {
         margin: auto;
         display: block;
@@ -66,19 +73,17 @@
         padding: 10px 0;
         height: 150px;
     }
-
-    /* Add Animation - Zoom in the Modal */
+    
     .modal-content, #caption {  
         animation-name: zoom;
         animation-duration: 0.6s;
     }
-
+    
     @keyframes zoom {
         from {transform:scale(0)} 
         to {transform:scale(1)}
     }
-
-    /* The Close Button */
+    
     .close {
         position: absolute;
         top: 15px;
@@ -89,28 +94,28 @@
         transition: 0.3s;
         z-index: 1000; 
     }
-
+    
     .close:hover,
     .close:focus {
         color: #bbb;
         text-decoration: none;
         cursor: pointer;
     }
-
+    
     /* Responsive Columns - After clicking the image */
     @media only screen and (max-width: 700px){
         .modal-content {
             width: 100%;
         }
     }
-
+    
     .zoom-controls {
         position: absolute;
-        top: 10px; /* Adjust as necessary */
-        left: 10px; /* Adjust as necessary */
+        top: 10px;
+        left: 10px; 
         z-index: 10;
     }
-
+    
     .zoom-controls button {
         background-color: #fff;
         border: none;
@@ -121,13 +126,44 @@
         border-radius: 5px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-
-    /* You might want to add :hover and :focus styles for better user experience */
+    
     .zoom-controls button:hover,
     .zoom-controls button:focus {
         background-color: #e8e8e8;
     }
-</style>
+
+    .modal-thumbnail {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+
+    .thumbnails-container {
+        display: flex;
+        overflow-x: auto;
+        padding-top: 10px;
+        position: fixed;  /* Fixed position at the bottom */
+        bottom: 0;        /* Align to the bottom */
+        left: 0;          /* Align to the left side */
+        right: 0;         /* Stretch to the right side */
+        z-index: 100;     /* Ensure it's above other elements */
+        justify-content: center; /* Center-align the thumbnails */
+    }
+
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/@panzoom/panzoom"></script>
+    <script>
+        var rugData = {
+            {% for category, details in galleries_data.items() %}
+                {% for rug in details.images %}
+                    "{{ rug.name }}": {{ rug.images | tojson | safe }},
+                {% endfor %}
+            {% endfor %}
+        };
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -144,65 +180,114 @@
         <p class="category-comment">{{ details.comment }}</p>
         {% endif %}
     </div>
-    <div class="gallery-grid">
-        {% for thumbnail_url, image_url, comment in details.images %}
-            <img class="gallery-item" src="{{ thumbnail_url }}" url-thumbnail="{{ thumbnail_url }}" url-fullsize="{{ image_url }}" data-comment="{{ comment }}" onclick="loadView(this)">
-        {% endfor %}
+            <div class="gallery-grid">
+                {% for rug in details.images %}
+                    <div style="position: relative;">
+                        <img class="gallery-item" 
+                            src="{{ rug.images[0][0] }}" 
+                            id="rug_{{ rug.name }}"
+                            onclick="loadView('{{ rug.name }}')">
+                        {% if rug.images|length > 1 %}
+                            <div class="series-indicator"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+    <div id="myModal" class="modal">
+        <span class="close">&times;</span>
+        <div class="zoom-controls">
+            <button id="zoom-in-button">+</button>
+            <button id="zoom-out-button">-</button>
+        </div>
+        <div id="caption"></div>
+        <img class="modal-content" id="img01">
     </div>
-</div>
-{% endfor %}
 
-<div id="myModal" class="modal">
-    <span class="close">&times;</span>
-    <div class="zoom-controls">
-        <button id="zoom-in-button">+</button>
-        <button id="zoom-out-button">-</button>
-    </div>
-    <div id="caption"></div>
-    <img class="modal-content" id="img01">
-</div>
+    <script>
+        var modal = document.getElementById("myModal");
+        var modalImg = document.getElementById("img01");
+        var captionText = document.getElementById("caption");
 
-<script>
-    var modal = document.getElementById("myModal");
-    var modalImg = document.getElementById("img01");
-    var captionText = document.getElementById("caption");
-    function loadView(imageElement) {
+        function loadView(rugName) {
+            var images = rugData[rugName]; // Retrieve images for the clicked rug
+            modal.style.display = "block"; // Show the modal
 
-        modal.style.display = "block";
-        modalImg.src = imageElement.getAttribute('url-fullsize');
-        captionText.innerHTML = imageElement.getAttribute('data-comment');
-        if (modalImg.panzoomInstance) {
-            modalImg.panzoomInstance.destroy();
+            // Set the first image in the modal by default
+            modalImg.src = images[0][1]; // Full-size image URL
+            captionText.innerHTML = images[0][2]; // Comment for the first image
+
+            // Create a container for thumbnails
+            var thumbnailsContainer = document.createElement('div');
+            thumbnailsContainer.className = 'thumbnails-container';
+
+            // Check if there are multiple images
+            if (images.length > 1) {
+                // Create a container for thumbnails if it does not exist
+                var thumbnailsContainer = document.createElement('div');
+                thumbnailsContainer.className = 'thumbnails-container';
+
+                // Clear previous thumbnails
+                if (captionText.nextSibling) {
+                    captionText.nextSibling.remove();
+                }
+
+                // Add thumbnails to the container
+                images.forEach(function(image) {
+                    var thumb = document.createElement('img');
+                    thumb.src = image[0]; // Thumbnail URL
+                    thumb.className = 'modal-thumbnail'; // Assign the class
+                    thumb.onclick = function() {
+                        modalImg.src = image[1]; // Update modal image on click
+                        captionText.innerHTML = image[2]; // Update caption
+                    };
+                    thumbnailsContainer.appendChild(thumb);
+                });
+
+                // Add the container after the caption
+                captionText.after(thumbnailsContainer);
+            } else {
+                // If there's only one image, ensure no thumbnails container is displayed
+                if (captionText.nextSibling) {
+                    captionText.nextSibling.remove();
+                }
+            }
+
+            // Panzoom initialization for the new modal image
+            if (modalImg.panzoomInstance) {
+                modalImg.panzoomInstance.destroy();
+            }
+            modalImg.panzoomInstance = Panzoom(modalImg, {
+                zoomSpeed: 0.065,
+                minZoom: 1
+            });
         }
-        modalImg.panzoomInstance = Panzoom(modalImg, {
-            zoomSpeed: 0.065,
-            minZoom: 1
+
+        var span = document.getElementsByClassName("close")[0];
+
+        span.onclick = function() {
+            if (modalImg.panzoomInstance) {
+                modalImg.panzoomInstance.destroy();
+                modalImg.panzoomInstance = null;
+            }
+            modal.style.display = "none";
+        }
+
+        modalImg.addEventListener('wheel', function(e) {
+            e.preventDefault(); 
+            modalImg.panzoomInstance.zoomWithWheel(e);
         });
-    }
 
-    var span = document.getElementsByClassName("close")[0];
+        document.getElementById('zoom-in-button').addEventListener('click', function() {
+            modalImg.panzoomInstance.zoomIn();
+        });
 
-    span.onclick = function() {
-        if (modalImg.panzoomInstance) {
-            modalImg.panzoomInstance.destroy();
-            modalImg.panzoomInstance = null;
-        }
-        modal.style.display = "none";
-    }
+        document.getElementById('zoom-out-button').addEventListener('click', function() {
+            modalImg.panzoomInstance.zoomOut();
+        });
 
-    modalImg.addEventListener('wheel', function(e) {
-        e.preventDefault(); 
-        modalImg.panzoomInstance.zoomWithWheel(e);
-    });
-
-    document.getElementById('zoom-in-button').addEventListener('click', function() {
-        modalImg.panzoomInstance.zoomIn();
-    });
-
-    document.getElementById('zoom-out-button').addEventListener('click', function() {
-        modalImg.panzoomInstance.zoomOut();
-    });
-
-</script>
+    </script>
 
 {% endblock %}

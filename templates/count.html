@@ -32,70 +32,49 @@
 {% endblock %}
 
 {% block content %}
-    <div class="element-block">
-        <div class="element-header">
-            <img class="icon-left" src="{{ random_icon }}">
-            <h2>Page Hits</h2>
-            <img class="icon-right" src="{{ random_icon }}">
-        </div>
-        <div class="element-content">
-            <table class="hits_table">
-                <tr>
-                    <th>Page</th>
-                    <th>Hits</th>
-                </tr>
-                {% for page, hits in page_hits.items() %}
-                <tr>
-                    <td>{{ page }}</td>
-                    <td>{{ hits }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-    </div>
+    {{ block_header('Page Hits', random_icon)}}
+        <table class="hits_table">
+            <tr>
+                <th>Page</th>
+                <th>Hits</th>
+            </tr>
+            {% for page, hits in page_hits.items() %}
+            <tr>
+                <td>{{ page }}</td>
+                <td>{{ hits }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {{ block_footer() }}
 
-    <!-- New Block for Image Hits -->
-    <div class="element-block">
-        <div class="element-header">
-            <img class="icon-left" src="{{ random_icon }}">
-            <h2>Image Hits</h2>
-            <img class="icon-right" src="{{ random_icon }}">
-        </div>
-        <div class="element-content">
-            <table class="hits_table">
-                <tr>
-                    <th>Image Page</th>
-                    <th>Hits</th>
-                </tr>
-                {% for page, hits in page_hits_images.items() %}
-                <tr>
-                    <td><a href="{{ page }}">{{ page }}</a></td>
-                    <td>{{ hits }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-    </div>
+    {{ block_header('Image Hits', random_icon)}}
+        <table class="hits_table">
+            <tr>
+                <th>Image Page</th>
+                <th>Hits</th>
+            </tr>
+            {% for page, hits in page_hits_images.items() %}
+            <tr>
+                <td><a href="{{ page }}">{{ page }}</a></td>
+                <td>{{ hits }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {{ block_footer() }}
 
-    <div class="element-block">
-        <div class="element-header">
-            <img class="icon-left" src="{{ random_icon }}">
-            <h2>Invalid Hits</h2>
-            <img class="icon-right" src="{{ random_icon }}">
-        </div>
-        <div class="element-content">
-            <table class="hits_table">
-                <tr>
-                    <th>Page</th>
-                    <th>Hits</th>
-                </tr>
-                {% for page, hits in page_hits_invalid.items() %}
-                <tr>
-                    <td>{{ page }}</td>
-                    <td>{{ hits }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-    </div>
+    {{ block_header('Invalid hits', random_icon)}}
+        <table class="hits_table">
+            <tr>
+                <th>Page</th>
+                <th>Hits</th>
+            </tr>
+            {% for page, hits in page_hits_invalid.items() %}
+            <tr>
+                <td>{{ page }}</td>
+                <td>{{ hits }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {{ block_footer() }}
+    
 {% endblock %}

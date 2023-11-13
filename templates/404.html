@@ -16,16 +16,10 @@
 
 {% block content %}
 
-    <div class="element-block">
-        <div class="element-header">
-            <img class="icon-left" src="{{ random_icon }}">
-            <h2>404 Not Found</h2>
-            <img class="icon-right" src="{{ random_icon }}">
-        </div>
-        <div class="element-content">
-            <img src="{{ image_path }}" id="not-found"><h2>Oh no! The page you're looking for has scampered away.</h2>
-            <p>We can't find the page you're looking for. Check the URL, or head back to safe ground.</p>
-        </div>
-    </div>
+    {{ block_header('404 Not Found', random_icon)}}
+        <img src="{{ image_path }}" id="not-found">
+        <h2>Oh no! The page you're looking for has scampered away.</h2>
+        <p>We can't find the page you're looking for. Check the URL, or head back to safe ground.</p>
+    {{ block_footer() }}
 
 {% endblock %}

@@ -1,4 +1,4 @@
-import subprocess, json, os, requests, random
+import subprocess, json, os, random, re
 from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
@@ -66,16 +66,17 @@ def load_page_hits():
 
 page_hits, page_hits_images, page_hits_invalid = load_page_hits()
 
-def generate_thumbnail(image_path, thumbnail_path, size=(256, 256)):
+def generate_thumbnail(image_path, thumbnail_path, size):
     with Image.open(image_path) as img:
         img.thumbnail(size)
         img.save(thumbnail_path)
 
-def check_all_thumbnails(dir_path, safe_extensions={'png', 'jpg', 'jpeg'}):
+def check_all_thumbnails(dir_path, size=(256, 256)):
+    ignore_dir = ['thumbnails', 'icons', '404']
+    safe_extensions={'png', 'jpg', 'jpeg'}
+
     for root, dirs, files in os.walk(dir_path):
-        # Skip any thumbnails folders
-        if 'thumbnails' in dirs:
-            dirs.remove('thumbnails')
+        dirs[:] = [d for d in dirs if d not in ignore_dir]
 
         thumbnail_directory = os.path.join(root, 'thumbnails')
         image_files = [f for f in files if f.split('.')[-1].lower() in safe_extensions]
@@ -92,8 +93,9 @@ def check_all_thumbnails(dir_path, safe_extensions={'png', 'jpg', 'jpeg'}):
             thumbnail_path = os.path.join(thumbnail_directory, file)
             parent_images.add(file)
 
+            #i disabled this line so it always overwrites every thumbnail, enable to only create new ones
             #if not os.path.exists(thumbnail_path):
-            generate_thumbnail(image_path, thumbnail_path)
+            generate_thumbnail(image_path, thumbnail_path, size)
 
         # Remove thumbnails without a parent image
         for thumbnail in existing_thumbnails:
@@ -127,7 +129,31 @@ def load_images_for_category(category_path):
             images.append((thumbnail_path, image_path, comment))
 
     images.sort(key=lambda x: os.path.basename(x[1]))
-    return images
+
+    rug_groups = {}
+    for image in images:
+        image_name = os.path.basename(image[1])
+        match = re.match(r"(.*?)_\d+\.\w+$", image_name)
+        if match:
+            # If the filename matches the pattern, use the extracted name
+            rug_name = match.group(1)
+        else:
+            # If not, use the whole filename (without extension)
+            rug_name = os.path.splitext(image_name)[0]
+
+        if rug_name not in rug_groups:
+            rug_groups[rug_name] = []
+        rug_groups[rug_name].append(image)
+
+    grouped_images = []
+    for rug_name, imgs in rug_groups.items():
+        grouped_images.append({
+            'name': rug_name,
+            'images': imgs,
+            'comment': comments.get(imgs[0][1], "")  # Comment of the first image
+        })
+
+    return grouped_images
 
 def load_gallery_data(folder_path):
     order_file_path = os.path.join(folder_path, 'order.json')
@@ -173,24 +199,19 @@ def load_gallery_data(folder_path):
 def before_request():
     global page_hits, page_hits_images, page_hits_invalid
     page = request.path
+    ignore_list = ['thumbnail', 'icons']
 
-    # Skip tracking for any path containing 'thumbnail'
-    if 'thumbnail' in page:
-        return
-
+    for item in ignore_list:
+        if item in page:
+            return
     try:
-        # Try to match the request path to the URL map
         app.url_map.bind('').match(page)
 
-        # Check if the request is for an image
         if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-            # Track image hits
             page_hits_images[page] = page_hits_images.get(page, 0) + 1
         else:
-            # Track other valid hits
             page_hits[page] = page_hits.get(page, 0) + 1
     except (NotFound, RequestRedirect):
-        # If the route is not found or a redirect, consider it invalid
         page_hits_invalid[page] = page_hits_invalid.get(page, 0) + 1
     finally:
         save_page_hits()
@@ -208,7 +229,8 @@ def index():
 def do_the_thumbnails():
     if request.method == 'POST':
         if request.form.get('secret_word') == secret_password:
-            check_all_thumbnails('img/')
+            check_all_thumbnails('img/ai/', (256, 256))
+            check_all_thumbnails('img/rugs/', (512, 512))
             return '<html>the thumbnail creation is done!</html>'
         else:
             return '<html>wrong secret password!</html>'
@@ -253,12 +275,12 @@ def order_page():
 @app.route('/gallery')
 def gallery_page():
     galleries_data = load_gallery_data('img/rugs')
-    return render_template('gallery.html', galleries_data=galleries_data)
+    return render_template('gallery.html', galleries_data=galleries_data, gallery_size='large')
 
 @app.route('/render')
 def render_page():
     galleries_data = load_gallery_data('img/ai')
-    return render_template('gallery.html', galleries_data=galleries_data)
+    return render_template('gallery.html', galleries_data=galleries_data, gallery_size='small')
 
 #-------------------------------------------------------------------
 # api routes

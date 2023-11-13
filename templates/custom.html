@@ -4,56 +4,78 @@
     TuftedFox - Order
 {% endblock %}
 
+{% block head %}
+    <style>
+        /* Styles for the table on /count page */
+        .hits_table {
+        margin: 0 auto; /* Centers the table */
+        width: 500px; /* Adjust width as needed */
+        border-collapse: collapse; /* Removes space between table cells */
+        background: #FAF8F5; /* Background color */
+        }
+
+        .hits_table th, .hits_table td {
+        border: 1px solid #3E4E50; /* Border color */
+        padding: 10px; /* Spacing inside cells */
+        text-align: center; /* Center-align text */
+        }
+
+        .hits_table th {
+        background: #3E4E50; /* Header background color */
+        color: antiquewhite; /* Header text color */
+        }
+
+        .hits_table td {
+        color: #333333; /* Cell text color */
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
 
-    {{ element_block(
-        'About TuftedFox', 
-        random_icon, 
-        'Welcome to TuftedFox, where your vision comes to life in the form of beautifully crafted custom tufted rugs. '
-        'Our passion is transforming simple yet striking designs into unique, handmade pieces that add personality and style to any space. '
-        'At TuftedFox, each rug is a work of art, handcrafted with precision and care. '
-        'We focus on creating rugs that are not just decorative items but personal statements, reflecting the tastes and personalities of our clients.' 
-    ) }}
+    {{ block_header('About TuftedFox', random_icon)}}
+    <p> Welcome to TuftedFox, where your vision comes to life in the form of beautifully crafted custom tufted rugs. 
+        Our passion is transforming simple yet striking designs into unique, handmade pieces that add personality and style to any space. 
+        At TuftedFox, each rug is a work of art, handcrafted with precision and care.
+        We focus on creating rugs that are not just decorative items but personal statements, reflecting the tastes and personalities of our clients.
+    </p>
+    {{ block_footer() }}
 
-    {{ element_block(
-        'Image Guidelines for Custom Rugs', 
-        random_icon, 
-        'When designing your personalized rug, it\'s important to choose the right kind of image. '
-        'Ideal images for rug creation are those with flat colors and without shading or gradients. '
-        'We recommend avoiding thin lines, or areas with excessive localized detail. '
-        'Cartoon-style drawings or images with clear, bold lines translate beautifully into rug art. '
-        'Choose your image thoughtfully to ensure a stunning and timeless rug creation!'
-    ) }}
+    {{ block_header('Image Guidelines for Custom Rugs', random_icon)}}
+    <p> When designing your personalized rug, it's important to choose the right kind of image. 
+        Ideal images for rug creation are those with flat colors and without shading or gradients. 
+        We recommend avoiding thin lines, or areas with excessive localized detail. 
+        Cartoon-style drawings or images with clear, bold lines translate beautifully into rug art. 
+        Choose your image thoughtfully to ensure a stunning and timeless rug creation!
+    </p>
+    {{ block_footer() }}
 
-    {{ element_block(
-        'Sizing', 
-        random_icon, 
-        'To ensure the best representation of your chosen image on our custom tufted rugs, we recommend larger sizes. '
-        'Larger rugs function like a canvas with more \'pixels,\' each strand of yarn capturing finer details of your image. '
-        'Conversely, smaller rugs may not depict intricate details as effectively due to fewer yarn strands. '
-        'Our maximum rug size of 36 x 36 inches allows for a detailed and vivid portrayal of your artistic visions, balancing image size and detail level optimally.'
-    ) }}
+    {{ block_header('Sizing', random_icon)}}
+        <p> To ensure the best representation of your chosen image on our custom tufted rugs, we recommend larger sizes. 
+            Larger rugs function like a canvas with more 'pixels', each strand of yarn capturing finer details of your image. 
+            Conversely, smaller rugs may not depict intricate details as effectively due to fewer yarn strands. 
+            Our maximum rug size of 36 x 36 inches allows for a detailed and vivid portrayal of your artistic visions, 
+            balancing image size and detail level optimally.
+        </p> 
+    {{ block_footer() }}
 
-    {{ element_block(
-        'Pricing', 
-        random_icon, 
-        'TBD $ per square foot'
-    ) }}
+    {{ block_header('Pricing', random_icon)}}
+        <p> TBD $ per square foot
+        </p> 
+    {{ block_footer() }}
 
-    {{ element_block(
-        'Our Commitment', 
-        random_icon, 
-        'Our commitment at TuftedFox is to provide exceptional service and a product that brings joy. '
-        'We understand that each rug we create is not just an item but a part of your story, and we are honored to be a part of that process.'
-        'We believe in the power of collaboration. '
-        'Working closely with you, we strive to ensure that the final product aligns with your vision. '
-        'Our goal is to create a piece that you will cherish, one that resonates with your personal style and enhances your space.'
-    ) }}
+    {{ block_header('Our Commitment', random_icon)}} 
+    <p> Our commitment at TuftedFox is to provide exceptional service and a product that brings joy. 
+        We understand that each rug we create is not just an item but a part of your story, and we are honored to be a part of that process.
+        We believe in the power of collaboration. 
+        Working closely with you, we strive to ensure that the final product aligns with your vision. 
+        Our goal is to create a piece that you will cherish, one that resonates with your personal style and enhances your space.
+    </p>
+    {{ block_footer() }}
 
-    {{ element_block(
-        'Contact us', 
-        random_icon, 
-        'Nothing here for now'
-    ) }}
+    {{ block_header('Contact us', random_icon)}}
+    <p> Nothing here for now
+    </p>
+    {{ block_footer() }}
     
 {% endblock %}

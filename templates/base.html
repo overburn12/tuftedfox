@@ -49,10 +49,9 @@
   ]
 %}
 
-
 {% set random_icon = icons|random %}
 
-{% macro element_block(header, icon_path, content) %}
+{% macro block_header(header, icon_path) %}
   <div class="element-block">
       <div class="element-header">
           <img class="icon-left" src="{{ icon_path }}">
@@ -60,24 +59,10 @@
           <img class="icon-right" src="{{ icon_path }}">
       </div>
       <div class="element-content">
-          <p>
-              {{ content }}
-          </p>    
-      </div>
-  </div>
 {% endmacro %}
 
-{% macro element_block_safe(header, icon_path, content) %}
-  <div class="element-block">
-      <div class="element-header">
-          <img class="icon-left" src="{{ icon_path }}">
-          <h2>{{ header }}</h2>
-          <img class="icon-right" src="{{ icon_path }}">
-      </div>
-      <div class="element-content">
-          {{ content }} 
-      </div>
-  </div>
+{% macro block_footer() %}
+</div></div>
 {% endmacro %}
 
 <!DOCTYPE html>

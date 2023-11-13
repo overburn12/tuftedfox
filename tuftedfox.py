@@ -1,5 +1,5 @@
 import subprocess, json, os, random, re
-from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory
+from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import RequestRedirect
@@ -191,6 +191,19 @@ def load_gallery_data(folder_path):
 
     return galleries_data
 
+def generate_filename():
+    i = 1
+    while os.path.exists(f"data/message_{i:02d}.txt"):
+        i += 1
+    return f"data/message_{i:02d}.txt"
+
+def count_message_files():
+    count = 0
+    for filename in os.listdir('data/'):
+        if filename.startswith('message_') and filename.endswith('.txt'):
+            count += 1
+    return count
+
 #-------------------------------------------------------------------
 # page count injection
 #-------------------------------------------------------------------
@@ -246,7 +259,8 @@ def update_server():
     with open('data/update.log', 'r') as logfile:
         log_content = logfile.read()
 
-    return render_template('update.html', log_content=log_content, app_start_time=app_start_time)
+    message_count = count_message_files()
+    return render_template('update.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count)
 
 @app.route('/count')
 def count_page():
@@ -269,8 +283,12 @@ def count_page():
                            page_hits_invalid=sorted_page_hits_invalid_dict)
 
 @app.route('/custom')
-def order_page():
+def custom_page():
     return render_template('custom.html')
+
+@app.route('/saved')
+def saved():
+    return render_template('saved.html')
 
 @app.route('/gallery')
 def gallery_page():
@@ -281,6 +299,20 @@ def gallery_page():
 def render_page():
     galleries_data = load_gallery_data('img/ai')
     return render_template('gallery.html', galleries_data=galleries_data, gallery_size='small')
+
+@app.route('/order', methods=['GET', 'POST'])
+def order_page():
+    return render_template('order.html')
+
+@app.route('/message', methods=['GET', 'POST'])
+def message_page():
+    if request.method == 'POST':
+        message = request.form['message']
+        filename = generate_filename()
+        with open(filename, 'w') as file:
+            file.write(message)
+        return redirect('/saved')
+    return render_template('message.html')
 
 #-------------------------------------------------------------------
 # api routes

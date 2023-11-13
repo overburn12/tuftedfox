@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+    TuftedFox - Send a Message
+{% endblock %}
+
+{% block head %}
+    <style>
+        textarea {
+            width: 100%;        /* Full width */
+            height: calc(1.5em * 20); /* 20 lines tall, assuming line-height is 1.5 */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            padding: 10px; /* Optional: Adds some space inside the textarea */
+            border: 1px solid #ccc; /* Optional: Adds a border to the textarea */
+            resize: vertical; /* Optional: Allows the user to resize the textarea vertically */
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {{ block_header('Send us a message', random_icon)}}
+        <form method="post">
+            <textarea name="message" placeholder="Type your message here..."></textarea>
+            <br>
+            <button type="submit">Submit</button>
+        </form>
+    {{ block_footer() }}
+{% endblock %}
+
+

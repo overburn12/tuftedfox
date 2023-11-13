@@ -4,8 +4,28 @@
     TuftedFox - Update Server
 {% endblock %}
 
-{% block content %}
+{% block head %}
+    <style>
+        .pre-scroll{
+            overflow: auto;
+            max-height: 30em; /* or adjust to your desired height */
+        }
 
+        pre{
+            display: block;
+            background-color: #030303;
+            border: 0px;
+            border-radius: 10px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #f5f5f5;
+            text-align: left;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
     {{ block_header('Uptime', random_icon)}} 
         <p id="uptime"></p>
     {{ block_footer() }}
@@ -20,8 +40,9 @@
     {{ block_footer() }}
 
     {{ block_header('Log', random_icon)}} 
-        <center><pre><code> {{ log_content }} </code></pre></center>
+        <pre><div class="pre-scroll"><code> {{ log_content }} </code></div></pre>
         <p>Server birthdate: 11/3/2023</p>
+        <p> {{ message_count }} Messages </p>
     {{ block_footer() }}
 
     <script>

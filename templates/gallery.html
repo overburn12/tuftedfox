@@ -219,23 +219,23 @@
             modalImg.src = images[0][1]; // Full-size image URL
             captionText.innerHTML = images[0][2]; // Comment for the first image
 
-            // Create a container for thumbnails
-            var thumbnailsContainer = document.createElement('div');
-            thumbnailsContainer.className = 'thumbnails-container';
-
             // Check if there are multiple images
             if (images.length > 1) {
-                // Create a container for thumbnails if it does not exist
-                var thumbnailsContainer = document.createElement('div');
-                thumbnailsContainer.className = 'thumbnails-container';
-
-                // Clear previous thumbnails
-                if (captionText.nextSibling) {
-                    captionText.nextSibling.remove();
+                // Create or reuse the thumbnails container
+                var existingThumbnailsContainer = document.querySelector('.thumbnails-container');
+                var thumbnailsContainer = existingThumbnailsContainer || document.createElement('div');
+                if (!existingThumbnailsContainer) {
+                    thumbnailsContainer.className = 'thumbnails-container';
+                    captionText.after(thumbnailsContainer);
+                } else {
+                    // Clear previous thumbnails if reusing the container
+                    while (thumbnailsContainer.firstChild) {
+                        thumbnailsContainer.removeChild(thumbnailsContainer.firstChild);
+                    }
                 }
 
                 // Add thumbnails to the container
-                images.forEach(function(image) {
+                images.forEach(function(image, index) {
                     var thumb = document.createElement('img');
                     thumb.src = image[0]; // Thumbnail URL
                     thumb.className = 'modal-thumbnail'; // Assign the class
@@ -245,17 +245,15 @@
                     };
                     thumbnailsContainer.appendChild(thumb);
                 });
-
-                // Add the container after the caption
-                captionText.after(thumbnailsContainer);
             } else {
                 // If there's only one image, ensure no thumbnails container is displayed
-                if (captionText.nextSibling) {
-                    captionText.nextSibling.remove();
+                var existingThumbnailsContainer = document.querySelector('.thumbnails-container');
+                if (existingThumbnailsContainer) {
+                    existingThumbnailsContainer.remove();
                 }
             }
 
-            // Panzoom initialization for the new modal image
+            // Panzoom reinitialization for the new modal image
             if (modalImg.panzoomInstance) {
                 modalImg.panzoomInstance.destroy();
             }
@@ -264,6 +262,7 @@
                 minZoom: 1
             });
         }
+
 
         var span = document.getElementsByClassName("close")[0];
 

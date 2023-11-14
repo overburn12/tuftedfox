@@ -37,21 +37,27 @@
 
     {{ block_header('Rug Order Details', random_icon) }}
 
-        <label for="widthInput">Width (in inches):</label>
-        <input type="number" id="widthInput" name="width" placeholder="Width (in inches)" min="1" max="36" required onchange="updateSize('width')">
-        <label for="heightInput">Height (in inches):</label>
-        <input type="number" id="heightInput" name="height" placeholder="Height (in inches)" min="1" max="36" required onchange="updateSize('height')">
+        <div style="display:flex; justify-content: center; padding-top: 20px;">
+            <label for="widthInput">Width (in inches):</label>
+            <input type="number" id="widthInput" name="width" min="12" max="36" required onchange="updateSize('width')" style="margin-right: 40px;">
+            <label for="heightInput">Height (in inches):</label>
+            <input type="number" id="heightInput" name="height"  min="12" max="36" required onchange="updateSize('height')" style="margin-right: 40px;">
+            <div id="costDisplay">Cost: $0</div>
+        </div>
         
-        <div id="costDisplay">Cost: $0</div>
-        
-        <label for="detailsInput">Additional details:</label>
+        <div style="padding-top:20px;">
+            <label for="detailsInput">Additional details:</label>
+        </div>
+
         <textarea id="detailsInput" name="details" placeholder="Additional details"></textarea>
         
-        <label for="customerNameInput">Customer Name:</label>
-        <input type="text" id="customerNameInput" name="customerName" placeholder="Customer Name" required>
-    
-        <label for="customerContactInput">Contact (Email/Phone):</label>
-        <input type="text" id="customerContactInput" name="customerContact" placeholder="Email or Phone" required>
+        <div style="padding-top:20px;">
+            <label for="customerNameInput">Customer Name:</label>
+            <input type="text" id="customerNameInput" name="customerName" placeholder="Customer Name" required style="margin-right: 40px;">
+            
+            <label for="customerContactInput">Contact (Email/Phone):</label>
+            <input type="text" id="customerContactInput" name="customerContact" placeholder="Email or Phone" required>
+        </div>
     
     {{ block_footer()}}
         

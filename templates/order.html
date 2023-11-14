@@ -1,21 +1,84 @@
 {% extends "base.html" %}
 
 {% block title %}
-    TuftedFox - Custom Order Form
+    TuftedFox - Rug Order
 {% endblock %}
 
 {% block head %}
 {% endblock %}
 
 {% block content %}
-    {{ block_header('Coming Soon...', random_icon) }}
-    <br><br>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="image">
-            <input type="submit" value="Upload">
-        </form>
-        <p>under construction</p>
+    {{ block_header('Rug Order', random_icon) }}
+
+    <form id="orderForm" action="/submit_order" method="post">
+        <label for="imageInput">Upload your design:</label>
+        <input type="file" name="image" id="imageInput" onchange="uploadImage()">
+        <div id="imagePreview"></div>
+        
+        <label for="widthInput">Width (in inches):</label>
+        <input type="number" id="widthInput" name="width" placeholder="Width (in inches)" min="1" max="36" required onchange="calculateCost()">
+        
+        <label for="heightInput">Height (in inches):</label>
+        <input type="number" id="heightInput" name="height" placeholder="Height (in inches)" min="1" max="36" required onchange="calculateCost()">
+        
+        <div id="costDisplay">Cost: $0</div>
+        
+        <label for="detailsInput">Additional details:</label>
+        <textarea id="detailsInput" name="details" placeholder="Additional details"></textarea>
+        
+        <input type="submit" value="Submit Order">
+    </form>
+
     {{block_footer()}}
+
+
+    <script>
+        function uploadImage() {
+            var fileInput = document.getElementById('imageInput');
+            var file = fileInput.files[0];
+            var formData = new FormData();
+            formData.append('image', file);
+
+            // AJAX request to upload the image
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload_image', true);
+            xhr.onload = function () {
+                if (this.status == 200) {
+                    var response = JSON.parse(this.responseText);
+                    // Add hidden input with the image filename
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'imageName';
+                    hiddenInput.value = response.filename;
+                    document.getElementById('orderForm').appendChild(hiddenInput);
+                } else {
+                    console.error('Image upload failed');
+                }
+            };
+            xhr.send(formData);
+
+            // Display image preview
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                document.getElementById('imagePreview').innerHTML = '<img src="' + reader.result + '" width="200" />';
+            };
+            if (file) {
+                reader.readAsDataURL(file);
+            } else {
+                document.getElementById('imagePreview').innerHTML = "";
+            }
+        }
+
+        function calculateCost() {
+            var width = parseFloat(document.getElementById('widthInput').value);
+            var height = parseFloat(document.getElementById('heightInput').value);
+            if (!isNaN(width) && !isNaN(height)) {
+                var costPerSquareFoot = 30;
+                var cost = (width / 12) * (height / 12) * costPerSquareFoot; // Convert inches to feet and calculate cost
+                document.getElementById('costDisplay').innerText = 'Cost: $' + cost.toFixed(2);
+            }
+        }
+    </script>
 {% endblock %}
 
 

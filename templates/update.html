@@ -26,17 +26,17 @@
 {% endblock %}
 
 {% block content %}
-    {{ block_header('Uptime', random_icon)}} 
-        <p id="uptime"></p>
-    {{ block_footer() }}
-
+    
     {{ block_header('Update', random_icon)}}
+    <p id="uptime"></p>
+    <div style="padding: 10px;">
         <form method="post">
             <label for="secret_word">Password:</label>
             <input type="password" id="secret_word" name="secret_word" required>
             <input type="submit" value="Update Server" onclick="this.form.action='/update';">
             <input type="submit" value="Update Thumbnails" onclick="this.form.action='/thumbnail_everything';">
         </form>
+    </div>
     {{ block_footer() }}
 
     {{ block_header('Log', random_icon)}} 

@@ -7,6 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image
 import random
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -20,6 +21,9 @@ app_start_time = int(datetime.utcnow().timestamp())
 page_hits = {}
 page_hits_images = {}
 page_hits_invalid = {}
+UPLOAD_FOLDER = 'orders/'
+ORDER_FOLDER = 'orders/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 #-------------------------------------------------------------------
 # functions 
@@ -193,14 +197,14 @@ def load_gallery_data(folder_path):
 
 def generate_filename():
     i = 1
-    while os.path.exists(f"data/message_{i:02d}.txt"):
+    while os.path.exists(f"messages/m_{i:02d}.txt"):
         i += 1
-    return f"data/message_{i:02d}.txt"
+    return f"messages/m_{i:02d}.txt"
 
 def count_message_files():
     count = 0
-    for filename in os.listdir('data/'):
-        if filename.startswith('message_') and filename.endswith('.txt'):
+    for filename in os.listdir('messages/'):
+        if filename.startswith('m_') and filename.endswith('.txt'):
             count += 1
     return count
 
@@ -262,7 +266,7 @@ def update_server():
     message_count = count_message_files()
     return render_template('update.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count)
 
-@app.route('/count')
+@app.route('/count', methods=['GET', 'POST'])
 def count_page():
     # Sort the valid page hits (excluding images) alphabetically by path name
     sorted_page_hits = sorted(page_hits.items(), key=lambda item: item[0])
@@ -282,20 +286,24 @@ def count_page():
                            page_hits_images=sorted_page_hits_images_dict,
                            page_hits_invalid=sorted_page_hits_invalid_dict)
 
-@app.route('/custom')
+@app.route('/custom', methods=['GET', 'POST'])
 def custom_page():
     return render_template('custom.html')
 
-@app.route('/saved')
-def saved():
-    return render_template('saved.html')
+@app.route('/message_sent', methods=['GET', 'POST'])
+def message_sent():
+    return render_template('message_sent.html')
 
-@app.route('/gallery')
+@app.route('/order_sent', methods=['GET', 'POST'])
+def order_sent():
+    return render_template('order_sent.html')
+
+@app.route('/gallery', methods=['GET', 'POST'])
 def gallery_page():
     galleries_data = load_gallery_data('img/rugs')
     return render_template('gallery.html', galleries_data=galleries_data, gallery_size='large')
 
-@app.route('/render')
+@app.route('/render', methods=['GET', 'POST'])
 def render_page():
     galleries_data = load_gallery_data('img/ai')
     return render_template('gallery.html', galleries_data=galleries_data, gallery_size='small')
@@ -311,12 +319,43 @@ def message_page():
         filename = generate_filename()
         with open(filename, 'w') as file:
             file.write(message)
-        return redirect('/saved')
+        return redirect('/message_sent')
     return render_template('message.html')
 
 #-------------------------------------------------------------------
 # api routes
 #-------------------------------------------------------------------
+
+@app.route('/upload_image', methods=['GET', 'POST'])
+def upload_image():
+    if 'image' not in request.files:
+        return jsonify({'message': 'No image part'})
+    image = request.files['image']
+    if image.filename == '':
+        return jsonify({'message': 'No selected image'})
+    filename = secure_filename(image.filename)
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    image.save(image_path)
+    return jsonify({'message': 'Image uploaded successfully', 'filename': filename})
+
+@app.route('/submit_order', methods=['GET', 'POST'])
+def submit_order():
+    # Retrieve image name and other form data
+    image_name = request.form.get('imageName')
+    width = request.form.get('width')
+    height = request.form.get('height')
+    details = request.form.get('details')
+
+    # You might want to calculate or verify the cost here as well
+    # ...
+
+    # Save order details in a text file
+    order_details = f"Order for rug size: {width} inches x {height} inches\nDetails: {details}\nImage Name: {image_name}\n"
+    order_filename = secure_filename(f"order_{image_name}.txt")
+    with open(os.path.join(ORDER_FOLDER, order_filename), 'w') as file:
+        file.write(order_details)
+
+    return redirect('/order_sent')
 
 @app.route('/favicon.ico')
 def favicon():

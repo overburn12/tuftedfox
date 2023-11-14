@@ -195,11 +195,15 @@ def load_gallery_data(folder_path):
 
     return galleries_data
 
-def generate_filename():
+def generate_filename(filepath):
+    directory, filename = os.path.split(filepath)
+    base, extension = os.path.splitext(filename)
+    if not base.endswith("_"):
+        base += "_"
     i = 1
-    while os.path.exists(f"messages/m_{i:02d}.txt"):
+    while os.path.exists(os.path.join(directory, f"{base}{i:02d}{extension}")):
         i += 1
-    return f"messages/m_{i:02d}.txt"
+    return os.path.join(directory, f"{base}{i:02d}{extension}")
 
 def count_message_files():
     count = 0
@@ -316,7 +320,7 @@ def order_page():
 def message_page():
     if request.method == 'POST':
         message = request.form['message']
-        filename = generate_filename()
+        filename = generate_filename('messages/m.txt')
         with open(filename, 'w') as file:
             file.write(message)
         return redirect('/message_sent')
@@ -335,7 +339,8 @@ def upload_image():
         return jsonify({'message': 'No selected image'})
     filename = secure_filename(image.filename)
     image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    image.save(image_path)
+    unique_image_path = generate_filename(image_path)
+    image.save(unique_image_path)
     return jsonify({'message': 'Image uploaded successfully', 'filename': filename})
 
 @app.route('/submit_order', methods=['GET', 'POST'])
@@ -351,10 +356,10 @@ def submit_order():
 
     # Save order details in a text file
     order_details = f"Order for rug size: {width} inches x {height} inches\nDetails: {details}\nImage Name: {image_name}\n"
-    order_filename = secure_filename(f"order_{image_name}.txt")
-    with open(os.path.join(ORDER_FOLDER, order_filename), 'w') as file:
+    order_filename = secure_filename(f"{image_name}_order.txt")
+    unique_filename = generate_filename(os.path.join(ORDER_FOLDER, order_filename))
+    with open(unique_filename, 'w') as file:
         file.write(order_details)
-
     return redirect('/order_sent')
 
 @app.route('/favicon.ico')

@@ -61,7 +61,7 @@ body {
   height: 100%;
   background-image: url("/img/icons/bg-tile.png");
   background-repeat: repeat;
-  opacity: 0.05;
+  opacity: 0.15;
   z-index: -1;
 }
 

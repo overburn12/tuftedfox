@@ -213,7 +213,7 @@ def count_message_files():
     return count
 
 #-------------------------------------------------------------------
-# page count injection
+# page count
 #-------------------------------------------------------------------
 
 @app.before_request
@@ -350,12 +350,17 @@ def submit_order():
     width = request.form.get('width')
     height = request.form.get('height')
     details = request.form.get('details')
-
-    # You might want to calculate or verify the cost here as well
-    # ...
-
+    customer_name = request.form.get('customerName')
+    customer_contact = request.form.get('customerContact')
+    
     # Save order details in a text file
-    order_details = f"Order for rug size: {width} inches x {height} inches\nDetails: {details}\nImage Name: {image_name}\n"
+    order_details = (
+    f"Customer Name: {customer_name}\n"
+    f"Contact Info: {customer_contact}\n"
+    f"Image Name: {image_name}\n"
+    f"Order for rug size: {width} inches x {height} inches\n"
+    f"Details: {details}\n"
+)
     order_filename = secure_filename(f"{image_name}_order.txt")
     unique_filename = generate_filename(os.path.join(ORDER_FOLDER, order_filename))
     with open(unique_filename, 'w') as file:

@@ -5,34 +5,66 @@
 {% endblock %}
 
 {% block head %}
+    <style>
+        #imagePreview img {
+            width: 100%; 
+            height: auto;
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            box-sizing: border-box;
+        } 
+        #detailsInput {
+            resize: vertical; 
+            width: 100%;    
+            height: 15em; 
+            min-height: 15em;
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            box-sizing: border-box;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-    {{ block_header('Rug Order', random_icon) }}
-
+    {{ block_header('Image Upload', random_icon) }}
     <form id="orderForm" action="/submit_order" method="post">
-        <label for="imageInput">Upload your design:</label>
-        <input type="file" name="image" id="imageInput" onchange="uploadImage()">
+        <div style="padding: 20px;">
+            <label for="imageInput">Upload your design:</label>
+            <input type="file" name="image" id="imageInput" onchange="uploadImage()">
+        </div>
         <div id="imagePreview"></div>
-        
+    {{ block_footer() }}
+
+    {{ block_header('Rug Order Details', random_icon) }}
+
         <label for="widthInput">Width (in inches):</label>
-        <input type="number" id="widthInput" name="width" placeholder="Width (in inches)" min="1" max="36" required onchange="calculateCost()">
-        
+        <input type="number" id="widthInput" name="width" placeholder="Width (in inches)" min="1" max="36" required onchange="updateSize('width')">
         <label for="heightInput">Height (in inches):</label>
-        <input type="number" id="heightInput" name="height" placeholder="Height (in inches)" min="1" max="36" required onchange="calculateCost()">
+        <input type="number" id="heightInput" name="height" placeholder="Height (in inches)" min="1" max="36" required onchange="updateSize('height')">
         
         <div id="costDisplay">Cost: $0</div>
         
         <label for="detailsInput">Additional details:</label>
         <textarea id="detailsInput" name="details" placeholder="Additional details"></textarea>
         
-        <input type="submit" value="Submit Order">
+        <label for="customerNameInput">Customer Name:</label>
+        <input type="text" id="customerNameInput" name="customerName" placeholder="Customer Name" required>
+    
+        <label for="customerContactInput">Contact (Email/Phone):</label>
+        <input type="text" id="customerContactInput" name="customerContact" placeholder="Email or Phone" required>
+    
+    {{ block_footer()}}
+        
+    <div class="element-block">
+        <div class="element-content">
+        <input type="submit" value="Submit Order" style="margin-top: 15px;">
     </form>
-
-    {{block_footer()}}
+    {{ block_footer() }}
 
 
     <script>
+        var imageAspectRatio;
+
         function uploadImage() {
             var fileInput = document.getElementById('imageInput');
             var file = fileInput.files[0];
@@ -60,13 +92,38 @@
             // Display image preview
             var reader = new FileReader();
             reader.onloadend = function() {
-                document.getElementById('imagePreview').innerHTML = '<img src="' + reader.result + '" width="200" />';
+                var img = new Image();
+                img.onload = function() {
+                    // Calculate and store the aspect ratio
+                    imageAspectRatio = img.width / img.height;
+        
+                    // Display image preview
+                    document.getElementById('imagePreview').innerHTML = '<img src="' + reader.result + '" width="200" />';
+                };
+                img.src = reader.result;  // This triggers the img.onload
             };
             if (file) {
                 reader.readAsDataURL(file);
             } else {
                 document.getElementById('imagePreview').innerHTML = "";
             }
+        }
+
+        function updateSize(inputChanged) {
+            var widthInput = document.getElementById('widthInput');
+            var heightInput = document.getElementById('heightInput');
+        
+            if (imageAspectRatio && !isNaN(imageAspectRatio)) {
+                if (inputChanged === 'width') {
+                    var newHeight = widthInput.value / imageAspectRatio;
+                    heightInput.value = Math.round(newHeight);
+                } else if (inputChanged === 'height') {
+                    var newWidth = heightInput.value * imageAspectRatio;
+                    widthInput.value = Math.round(newWidth);
+                }
+            }
+        
+            calculateCost();
         }
 
         function calculateCost() {

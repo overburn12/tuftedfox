@@ -212,6 +212,13 @@ def count_message_files():
             count += 1
     return count
 
+def count_order_files():
+    count = 0
+    for filename in os.listdir('orders/'):
+        if filename.endswith(".txt"):
+            count += 1
+    return count
+
 #-------------------------------------------------------------------
 # page count
 #-------------------------------------------------------------------
@@ -268,7 +275,8 @@ def update_server():
         log_content = logfile.read()
 
     message_count = count_message_files()
-    return render_template('update.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count)
+    order_count = count_order_files()
+    return render_template('update.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count, order_count=order_count)
 
 @app.route('/count', methods=['GET', 'POST'])
 def count_page():

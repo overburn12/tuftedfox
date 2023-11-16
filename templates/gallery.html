@@ -4,6 +4,31 @@
 
 {% block head %}
     <style>
+        .category-nav {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            padding: 10px;
+            z-index: 100;
+        }
+        .category-nav ul {
+            list-style: none;
+            text-align: center;
+        }
+        .category-nav li {
+            display: inline;
+            margin-right: 20px;
+        }
+        .category-nav a {
+            text-decoration: none;
+            color: #333;
+        }
+        
+
+
+
+
+
     .series-indicator {
         position: absolute;
         top: 5px;
@@ -46,7 +71,7 @@
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
         z-index: 9090; /* Sit on top */
-        padding-top: 100px; /* Location of the box */
+        padding: 0px; 
         left: 0;
         top: 0;
         width: 100%; /* Full width */
@@ -152,6 +177,8 @@
         justify-content: center; /* Center-align the thumbnails */
     }
 
+
+
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://unpkg.com/@panzoom/panzoom"></script>
@@ -168,8 +195,17 @@
 
 {% block content %}
 
+
+<div class="category-nav element-block">
+    <ul>
+    {% for category, details in galleries_data.items() %}
+        <li><a href="#{{ category | replace(' ', '_') | lower }}">{{ category | capitalize }}</a></li>
+    {% endfor %}
+    </ul>
+</div>
+
 {% for category, details in galleries_data.items() %}
-<div class="element-block">
+<div class="element-block" id="{{ category | replace(' ', '_') | lower }}">
     <div class="element-header">
         <img src="{{ random_icon }}" class="icon-left">
         <h2>{{ category | capitalize }}</h2>
@@ -286,6 +322,9 @@
         document.getElementById('zoom-out-button').addEventListener('click', function() {
             modalImg.panzoomInstance.zoomOut();
         });
+
+
+
 
     </script>
 

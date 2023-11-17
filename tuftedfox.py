@@ -227,7 +227,7 @@ def count_order_files():
 def before_request():
     global page_hits, page_hits_images, page_hits_invalid
     page = request.path
-    ignore_list = ['thumbnail', 'icons']
+    ignore_list = ['thumbnail', 'icons','404','message_sent','order_sent','update','count','submit_order','upload_image','this_page_doesnt_exist']
 
     for item in ignore_list:
         if item in page:

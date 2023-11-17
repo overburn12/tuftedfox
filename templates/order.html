@@ -29,6 +29,12 @@
     {{ block_header('Image Upload', random_icon) }}
     <form id="orderForm" action="/submit_order" method="post">
         <div style="padding: 20px;">
+            <p>
+                <i>
+                Carpet images should be flat colors with clear bold lines. Color grandients, blurry details, or realistic photos do not translate well to tufted carpets.
+                </i>
+            </p>
+            <br>
             <label for="imageInput">Upload your design:</label>
             <input type="file" name="image" id="imageInput" onchange="uploadImage()">
         </div>
@@ -36,33 +42,48 @@
     {{ block_footer() }}
 
     {{ block_header('Rug Order Details', random_icon) }}
-
         <div style="display:flex; justify-content: center; padding-top: 20px;">
             <label for="widthInput">Width (in inches):</label>
-            <input type="number" id="widthInput" name="width" min="12" max="36" required onchange="updateSize('width')" style="margin-right: 40px;">
+            <input type="number" id="widthInput" name="width" min="4" max="36" required onchange="updateSize('width')" style="margin-right: 40px;">
             <label for="heightInput">Height (in inches):</label>
-            <input type="number" id="heightInput" name="height"  min="12" max="36" required onchange="updateSize('height')" style="margin-right: 40px;">
-            <div id="costDisplay">Cost: $0</div>
+            <input type="number" id="heightInput" name="height"  min="4" max="36" required onchange="updateSize('height')" style="margin-right: 40px;">
+            <div id="costDisplay" style="margin-right: 40px;">Cost: $0</div>
+            <div id="pixelDensityDisplay">Pixel Density: 0 PPY (pixels per yarn)</div>
         </div>
-        
+        <br>
+        <p>
+            What is Pixels per Yarn?
+        </p>
+        <p> I tuft my carpets with approximately 8 rows of tufts per inch. 
+            PPY is approximately how many pixels wide on the image will be represented by 1 tuft of yarn on the carpet.
+            Any image details thinner than the PPY will not be accurately represented on the carpet surface. 
+            A larger carpet is better because it provides room for image clarity.
+        </p>
+    {{ block_footer()}}
+    
+    {{ block_header('Additional details', random_icon)}} 
         <div style="padding-top:20px;">
-            <label for="detailsInput">Additional details:</label>
+            <label for="detailsInput">If applicable, provide any details or instructions you would like me to know when making your carpet.</label>
         </div>
-
         <textarea id="detailsInput" name="details" placeholder="Additional details"></textarea>
+        {{ block_footer()}}
         
+        
+    {{ block_header('Customer Contact', random_icon)}} 
+    <p>
+        <b>Please note:</b> For every order I will repaint the image for translation to the carpet. 
+        I will need you approval of this image before I proceed with the carpet creation.
+    </p>
+
         <div style="padding-top:20px;">
             <label for="customerNameInput">Customer Name:</label>
             <input type="text" id="customerNameInput" name="customerName" placeholder="Customer Name" required style="margin-right: 40px;">
-            
             <label for="customerContactInput">Contact (Email/Phone):</label>
             <input type="text" id="customerContactInput" name="customerContact" placeholder="Email or Phone" required>
         </div>
-    
     {{ block_footer()}}
-        
-    <div class="element-block">
-        <div class="element-content">
+
+    {{ block_header('Finished?', random_icon) }}
         <input type="submit" value="Submit Order" style="margin-top: 15px;">
     </form>
     {{ block_footer() }}
@@ -102,18 +123,48 @@
                 img.onload = function() {
                     // Calculate and store the aspect ratio
                     imageAspectRatio = img.width / img.height;
-        
+            
+                    // Store image dimensions in hidden fields
+                    var hiddenWidth = document.createElement('input');
+                    hiddenWidth.type = 'hidden';
+                    hiddenWidth.id = 'imageWidth';
+                    hiddenWidth.value = img.width;
+                    document.getElementById('orderForm').appendChild(hiddenWidth);
+            
+                    var hiddenHeight = document.createElement('input');
+                    hiddenHeight.type = 'hidden';
+                    hiddenHeight.id = 'imageHeight';
+                    hiddenHeight.value = img.height;
+                    document.getElementById('orderForm').appendChild(hiddenHeight);
+            
+                    // Update pixel density display
+                    updatePixelDensity();
+            
                     // Display image preview
                     document.getElementById('imagePreview').innerHTML = '<img src="' + reader.result + '" width="200" />';
                 };
                 img.src = reader.result;  // This triggers the img.onload
             };
+            
             if (file) {
                 reader.readAsDataURL(file);
             } else {
                 document.getElementById('imagePreview').innerHTML = "";
             }
         }
+
+        function updatePixelDensity() {
+            var imageWidth = parseInt(document.getElementById('imageWidth').value, 10);
+            var imageHeight = parseInt(document.getElementById('imageHeight').value, 10);
+            var rugWidth = parseFloat(document.getElementById('widthInput').value);
+            var rugHeight = parseFloat(document.getElementById('heightInput').value);
+        
+            if (imageWidth > 0 && imageHeight > 0 && rugWidth > 0 && rugHeight > 0) {
+                var pixelsPerSquareInch = (imageWidth / rugWidth) / 8;
+                document.getElementById('pixelDensityDisplay').innerText = 'Pixel Density: ' + pixelsPerSquareInch.toFixed(2) + ' Pixels per yarn';
+            }
+        }
+        
 
         function updateSize(inputChanged) {
             var widthInput = document.getElementById('widthInput');
@@ -130,6 +181,7 @@
             }
         
             calculateCost();
+            updatePixelDensity();
         }
 
         function calculateCost() {

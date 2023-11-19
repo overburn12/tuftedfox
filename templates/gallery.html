@@ -37,6 +37,7 @@
         height: 22px;
         background-image: url('img/icons/multi.png'); /* Path to your icon image */
         background-size: cover;
+        z-index: 2; /* To ensure it's above the image */
     }   
 
     .gallery-grid {
@@ -59,11 +60,17 @@
         height: auto; /* Adjust height automatically */
         object-fit: cover; /* Maintain aspect ratio */
         cursor: pointer;
-        transition: transform 0.3s ease;
         border-radius: 10px;
     }
     
-    .gallery-item:hover {
+
+    .gallery-item-container {
+        transition: transform 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden; /* To maintain border-radius during scale */
+    }
+    
+    .gallery-item-container:hover {
         transform: scale(1.1); /* Zoom effect on hover */
     }
     
@@ -177,11 +184,11 @@
         justify-content: center; /* Center-align the thumbnails */
     }
 
-
-
     </style>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://unpkg.com/@panzoom/panzoom"></script>
+
     <script>
         var rugData = {
             {% for category, details in galleries_data.items() %}
@@ -191,10 +198,10 @@
             {% endfor %}
         };
     </script>
+
 {% endblock %}
 
 {% block content %}
-
 
 <div class="category-nav element-block">
     <ul>
@@ -205,134 +212,128 @@
 </div>
 
 {% for category, details in galleries_data.items() %}
-<div class="element-block" id="{{ category | replace(' ', '_') | lower }}">
-    <div class="element-header">
-        <img src="{{ random_icon }}" class="icon-left">
-        <h2>{{ category | capitalize }}</h2>
-        <img src="{{ random_icon }}" class="icon-right">
-        {% if details.comment %}
-    </div>
-    <div class="element-header">
-        <p class="category-comment">{{ details.comment }}</p>
-        {% endif %}
-    </div>
+    <div class="element-block" id="{{ category | replace(' ', '_') | lower }}">
+        <div class="element-header">
+            <img src="{{ random_icon }}" class="icon-left">
+            <h2>{{ category | capitalize }}</h2>
+            <img src="{{ random_icon }}" class="icon-right">
+            {% if details.comment %}
+        </div>
+        <div class="element-header">
+            <p class="category-comment">{{ details.comment }}</p>
+            {% endif %}
+        </div>
             <div class="gallery-grid">
                 {% for rug in details.images %}
-                    <div style="position: relative;">
-                        <img class="gallery-item" 
-                            src="{{ rug.images[0][0] }}" 
-                            id="rug_{{ rug.name }}"
-                            onclick="loadView('{{ rug.name }}')">
+                    <div class="gallery-item-container" style="position: relative;">
+                        <img class="gallery-item" src="{{ rug.images[0][0] }}" id="rug_{{ rug.name }}" onclick="loadView('{{ rug.name }}')">
                         {% if rug.images|length > 1 %}
                             <div class="series-indicator"></div>
                         {% endif %}
                     </div>
                 {% endfor %}
             </div>
-        </div>
-    {% endfor %}
-
-    <div id="myModal" class="modal">
-        <span class="close">&times;</span>
-        <div class="zoom-controls">
-            <button id="zoom-in-button">+</button>
-            <button id="zoom-out-button">-</button>
-        </div>
-        <div id="caption"></div>
-        <img class="modal-content" id="img01">
     </div>
+{% endfor %}
 
-    <script>
-        var modal = document.getElementById("myModal");
-        var modalImg = document.getElementById("img01");
-        var captionText = document.getElementById("caption");
+<div id="myModal" class="modal">
+    <span class="close">&times;</span>
+    <div class="zoom-controls">
+        <button id="zoom-in-button">+</button>
+        <button id="zoom-out-button">-</button>
+    </div>
+    <div id="caption"></div>
+    <img class="modal-content" id="img01">
+</div>
 
-        function loadView(rugName) {
-            var images = rugData[rugName]; // Retrieve images for the clicked rug
-            modal.style.display = "block"; // Show the modal
+<script>
+    var modal = document.getElementById("myModal");
+    var modalImg = document.getElementById("img01");
+    var captionText = document.getElementById("caption");
 
-            // Set the first image in the modal by default
-            modalImg.src = images[0][1]; // Full-size image URL
-            captionText.innerHTML = images[0][2]; // Comment for the first image
+    function loadView(rugName) {
+        var images = rugData[rugName]; // Retrieve images for the clicked rug
+        modal.style.display = "block"; // Show the modal
 
-            // Check if there are multiple images
-            if (images.length > 1) {
-                // Create or reuse the thumbnails container
-                var existingThumbnailsContainer = document.querySelector('.thumbnails-container');
-                var thumbnailsContainer = existingThumbnailsContainer || document.createElement('div');
-                if (!existingThumbnailsContainer) {
-                    thumbnailsContainer.className = 'thumbnails-container';
-                    captionText.after(thumbnailsContainer);
-                } else {
-                    // Clear previous thumbnails if reusing the container
-                    while (thumbnailsContainer.firstChild) {
-                        thumbnailsContainer.removeChild(thumbnailsContainer.firstChild);
-                    }
-                }
+        // Set the first image in the modal by default
+        modalImg.src = images[0][1]; // Full-size image URL
+        captionText.innerHTML = images[0][2]; // Comment for the first image
 
-                // Add thumbnails to the container
-                images.forEach(function(image, index) {
-                    var thumb = document.createElement('img');
-                    thumb.src = image[0]; // Thumbnail URL
-                    thumb.className = 'modal-thumbnail'; // Assign the class
-                    thumb.onclick = function() {
-                        modalImg.src = image[1]; // Update modal image on click
-                        captionText.innerHTML = image[2]; // Update caption
-                    };
-                    thumbnailsContainer.appendChild(thumb);
-                });
+        // Check if there are multiple images
+        if (images.length > 1) {
+            // Create or reuse the thumbnails container
+            var existingThumbnailsContainer = document.querySelector('.thumbnails-container');
+            var thumbnailsContainer = existingThumbnailsContainer || document.createElement('div');
+            if (!existingThumbnailsContainer) {
+                thumbnailsContainer.className = 'thumbnails-container';
+                captionText.after(thumbnailsContainer);
             } else {
-                // If there's only one image, ensure no thumbnails container is displayed
-                var existingThumbnailsContainer = document.querySelector('.thumbnails-container');
-                if (existingThumbnailsContainer) {
-                    existingThumbnailsContainer.remove();
+                // Clear previous thumbnails if reusing the container
+                while (thumbnailsContainer.firstChild) {
+                    thumbnailsContainer.removeChild(thumbnailsContainer.firstChild);
                 }
             }
 
-            // Panzoom reinitialization for the new modal image
-            if (modalImg.panzoomInstance) {
-                modalImg.panzoomInstance.destroy();
-            }
-            modalImg.panzoomInstance = Panzoom(modalImg, {
-                zoomSpeed: 0.065,
-                minZoom: 1
+            // Add thumbnails to the container
+            images.forEach(function(image, index) {
+                var thumb = document.createElement('img');
+                thumb.src = image[0]; // Thumbnail URL
+                thumb.className = 'modal-thumbnail'; // Assign the class
+                thumb.onclick = function() {
+                    modalImg.src = image[1]; // Update modal image on click
+                    captionText.innerHTML = image[2]; // Update caption
+                };
+                thumbnailsContainer.appendChild(thumb);
             });
+        } else {
+            // If there's only one image, ensure no thumbnails container is displayed
+            var existingThumbnailsContainer = document.querySelector('.thumbnails-container');
+            if (existingThumbnailsContainer) {
+                existingThumbnailsContainer.remove();
+            }
         }
 
-
-        var span = document.getElementsByClassName("close")[0];
-
-        span.onclick = function() {
-            if (modalImg.panzoomInstance) {
-                modalImg.panzoomInstance.destroy();
-                modalImg.panzoomInstance = null;
-            }
-            modal.style.display = "none";
+        // Panzoom reinitialization for the new modal image
+        if (modalImg.panzoomInstance) {
+            modalImg.panzoomInstance.destroy();
         }
-
-        modalImg.addEventListener('wheel', function(e) {
-            e.preventDefault(); 
-            modalImg.panzoomInstance.zoomWithWheel(e);
+        modalImg.panzoomInstance = Panzoom(modalImg, {
+            zoomSpeed: 0.065,
+            minZoom: 1
         });
+    }
 
-        document.getElementById('zoom-in-button').addEventListener('click', function() {
-            modalImg.panzoomInstance.zoomIn();
-        });
+    var span = document.getElementsByClassName("close")[0];
 
-        document.getElementById('zoom-out-button').addEventListener('click', function() {
-            modalImg.panzoomInstance.zoomOut();
-        });
+    span.onclick = function() {
+        if (modalImg.panzoomInstance) {
+            modalImg.panzoomInstance.destroy();
+            modalImg.panzoomInstance = null;
+        }
+        modal.style.display = "none";
+    }
 
+    modalImg.addEventListener('wheel', function(e) {
+        e.preventDefault(); 
+        modalImg.panzoomInstance.zoomWithWheel(e);
+    });
 
+    document.getElementById('zoom-in-button').addEventListener('click', function() {
+        modalImg.panzoomInstance.zoomIn();
+    });
 
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+    document.getElementById('zoom-out-button').addEventListener('click', function() {
+        modalImg.panzoomInstance.zoomOut();
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
             });
         });
-    </script>
+    });
+</script>
 
 {% endblock %}

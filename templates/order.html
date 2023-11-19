@@ -92,6 +92,7 @@
 
     <script>
         var imageAspectRatio;
+        var pixelsPerYarn;
 
         function uploadImage() {
             var fileInput = document.getElementById('imageInput');
@@ -163,6 +164,7 @@
             if (imageWidth > 0 && imageHeight > 0 && rugWidth > 0 && rugHeight > 0) {
                 var pixelsPerSquareInch = (imageWidth / rugWidth) / 8;
                 document.getElementById('pixelDensityDisplay').innerText = 'Pixel Density: ' + pixelsPerSquareInch.toFixed(2) + ' Pixels per yarn';
+                pixelsPerYarn = pixelsPerSquareInch;
             }
         }
         
@@ -194,6 +196,7 @@
                 document.getElementById('costDisplay').innerText = 'Cost: $' + cost.toFixed(2);
             }
         }
+        
     </script>
 {% endblock %}
 

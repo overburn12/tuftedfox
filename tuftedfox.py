@@ -199,7 +199,7 @@ def count_order_files():
 def before_request():
     page = request.path
     hit_type = 'none'
-    visitor_id = request.remote_addr
+    visitor_id = request.headers.get('X-Forwarded-For', request.remote_addr)
     ignore_list = ['thumbnail', 'icons','404','message_sent','order_sent','update','count','submit_order','upload_image','this_page_doesnt_exist']
 
     for item in ignore_list:

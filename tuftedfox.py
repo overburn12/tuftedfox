@@ -192,20 +192,6 @@ def generate_filename(filepath):
         i += 1
     return os.path.join(directory, f"{base}{i:02d}{extension}")
 
-def count_message_files():
-    count = 0
-    for filename in os.listdir('messages/'):
-        if filename.startswith('m_') and filename.endswith('.txt'):
-            count += 1
-    return count
-
-def count_order_files():
-    count = 0
-    for filename in os.listdir('orders/'):
-        if filename.endswith(".txt"):
-            count += 1
-    return count
-
 #-------------------------------------------------------------------
 # page count
 #-------------------------------------------------------------------
@@ -328,8 +314,16 @@ def admin_dashboard():
     with open('data/update.log', 'r') as logfile:
         log_content = logfile.read()
 
-    message_count = count_message_files()
-    order_count = count_order_files()
+    message_count = 0
+    for filename in os.listdir('messages/'):
+        if filename.startswith('m_') and filename.endswith('.txt'):
+            message_count += 1
+
+    order_count = 0
+    for filename in os.listdir('orders/'):
+        if filename.endswith(".txt"):
+            order_count += 1
+
     return render_template('admin_dashboard.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count, order_count=order_count)
 
 @app.route('/admin/thumbnail',  methods=['GET', 'POST'])
@@ -348,7 +342,17 @@ def update_server():
 @app.route('/admin/messages', methods = ['GET','POST'])
 @admin_required
 def message_center():
-    return render_template('admin_messages.html')
+    messages = []
+    for filename in os.listdir('messages/'):
+        if filename.startswith('m_') and filename.endswith('.txt'):
+            with open(os.path.join('messages', filename), 'r') as file:
+                message = {
+                    'filename': filename,
+                    'content': file.read()
+                }
+                messages.append(message)
+
+    return render_template('admin_messages.html', messages=messages)
 
 @app.route('/admin/orders', methods = ['GET','POST'])
 @admin_required

@@ -5,9 +5,14 @@
 {% endblock %}
 
 {% block content %}
-    
-    {{ block_header('Messages', random_icon)}}
-        n/a
-    {{ block_footer() }}
+<div class="element-block" style="width: 200px;">
+    <a href="/admin/dashboard"> Admin Dashboard </a>
+</div>
+
+{% for message in messages %}
+    {{ block_header(message.filename, random_icon)}}
+        <p>{{ message.content }} </p>
+    {{ block_footer()}}
+{% endfor %}
 
 {% endblock %}

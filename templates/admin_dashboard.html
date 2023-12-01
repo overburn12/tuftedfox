@@ -43,8 +43,8 @@
 <center>
     <p id="uptime"></p>
     <div id="admin-links">
-        &bull; <a href="/admin/messages">Messages</a><br>
-        &bull; <a href="/admin/orders">Orders</a><br>
+        &bull; <a href="/admin/messages">{{ message_count }} Messages</a><br>
+        &bull; <a href="/admin/orders">{{ order_count }} Orders</a><br>
         ----------------------------<br>
         &bull; <a href="/admin/thumbnail">Update Thumbnails</a><br>
         &bull; <a href="/admin/update">Update Server</a><br>
@@ -52,10 +52,6 @@
         &bull; <a href="/logout">Logout</a><br>
     </div>
 </center>
-{{ block_footer()}}
-
-{{ block_header('Contact', random_icon)}} 
-    <p> {{ message_count }} Messages &bull; {{ order_count }} Orders </p>
 {{ block_footer()}}
 
 {{ block_header('Log', random_icon)}} 

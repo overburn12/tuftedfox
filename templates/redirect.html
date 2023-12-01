@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    TuftedFox - Message Sent
+    TuftedFox - {{ message_title }}
 {% endblock %}
 
 {% block head %}
@@ -9,8 +9,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ block_header('Sent!', random_icon)}}
-        <p>Thank you for reaching out. Your message has been successfully sent. </p>
-        <P>redirecting in 3 seconds...</p>
+    {{ block_header(message_title, random_icon)}}
+        {{ message_content | safe }}
     {{ block_footer() }}
 {% endblock %}

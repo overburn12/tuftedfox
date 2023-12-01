@@ -1,10 +1,12 @@
 import subprocess, json, os, random, re
-from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for
+from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from functools import wraps
 from sqlalchemy import func
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import RequestRedirect
+from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image
@@ -13,21 +15,34 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('logged_in'):
+            return f(*args, **kwargs)
+        else:
+            flash('You need to be logged in to view this page.')
+            return redirect(url_for('admin_login'))
+    return decorated_function
+
 #-------------------------------------------------------------------
 # app variables 
 #-------------------------------------------------------------------
 
+ORDER_FOLDER = 'orders/'
+UPLOAD_FOLDER = 'orders/'
+
 load_dotenv()
 secret_password = os.getenv('SECRET_PASSWORD')
-app_start_time = int(datetime.utcnow().timestamp())
-page_hits = {}
-page_hits_images = {}
-page_hits_invalid = {}
-UPLOAD_FOLDER = 'orders/'
-ORDER_FOLDER = 'orders/'
+app.secret_key = os.getenv('SECRET_KEY')
+admin_username = os.getenv('ADMIN_NAME')
+admin_password = os.getenv('ADMIN_PASSWORD')
+admin_password_hash = generate_password_hash(admin_password)  
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tuftedfox.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app_start_time = int(datetime.utcnow().timestamp())
 
 db = SQLAlchemy(app)
 
@@ -200,14 +215,13 @@ def before_request():
     page = request.path
     hit_type = 'none'
     visitor_id = request.headers.get('X-Forwarded-For', request.remote_addr)
-    ignore_list = ['thumbnail', 'icons','404','message_sent','order_sent','update','count','submit_order','upload_image','this_page_doesnt_exist']
+    ignore_list = ['thumbnail', 'icons']
 
     for item in ignore_list:
         if item in page:
             return
     try:
         app.url_map.bind('').match(page)
-
         if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
             hit_type = 'image'
         else:
@@ -228,30 +242,45 @@ def index():
     #ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     return render_template('index.html')
 
-@app.route('/thumbnail_everything',  methods=['GET', 'POST'])
-def do_the_thumbnails():
+@app.route('/custom', methods=['GET', 'POST'])
+def custom_page():
+    return render_template('custom.html')
+
+@app.route('/gallery', methods=['GET', 'POST'])
+def gallery_page():
+    galleries_data = load_gallery_data('img/rugs')
+    return render_template('gallery.html', galleries_data=galleries_data, gallery_size='large')
+
+@app.route('/render', methods=['GET', 'POST'])
+def render_page():
+    galleries_data = load_gallery_data('img/ai')
+    return render_template('gallery.html', galleries_data=galleries_data, gallery_size='small')
+
+@app.route('/order', methods=['GET', 'POST'])
+def order_page():
+    return render_template('order.html')
+
+@app.route('/order_sent', methods=['GET', 'POST'])
+def order_sent():
+    message_title = 'Order Recieved!'
+    message_content = '<p>Thank you for your order! we will contact you soon. </p><P>redirecting in 3 seconds...</p>'
+    return render_template('redirect.html', message_title=message_title, message_content=message_content)
+
+@app.route('/message', methods=['GET', 'POST'])
+def message_page():
     if request.method == 'POST':
-        if request.form.get('secret_word') == secret_password:
-            check_all_thumbnails('img/ai/', (256, 256))
-            check_all_thumbnails('img/rugs/', (512, 512))
-            return '<html>the thumbnail creation is done!</html>'
-        else:
-            return '<html>wrong secret password!</html>'
-    else:
-        return '<html>this page should be accessed with a POST request</html>'
+        message = request.form['message']
+        filename = generate_filename('messages/m.txt')
+        with open(filename, 'w') as file:
+            file.write(message)
+        return redirect('/message_sent')
+    return render_template('message.html')
 
-@app.route('/update', methods=['GET', 'POST'])
-def update_server():
-    if request.method == 'POST':
-        if request.form.get('secret_word') == secret_password:
-            subprocess.run('python3 updater.py', shell=True)
-
-    with open('data/update.log', 'r') as logfile:
-        log_content = logfile.read()
-
-    message_count = count_message_files()
-    order_count = count_order_files()
-    return render_template('update.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count, order_count=order_count)
+@app.route('/message_sent', methods=['GET', 'POST'])
+def message_sent():
+    message_title = 'Sent!'
+    message_content = '<p>Thank you for reaching out. Your message has been successfully sent. </p><P>redirecting in 3 seconds...</p>'
+    return render_template('redirect.html', message_title=message_title, message_content=message_content)
 
 @app.route('/count', methods=['GET', 'POST'])
 def count_page():
@@ -279,41 +308,47 @@ def count_page():
                            page_hits_images=image_hits,
                            page_hits_invalid=invalid_hits)
 
-@app.route('/custom', methods=['GET', 'POST'])
-def custom_page():
-    return render_template('custom.html')
+#--------------------------------------------
 
-@app.route('/message_sent', methods=['GET', 'POST'])
-def message_sent():
-    return render_template('message_sent.html')
-
-@app.route('/order_sent', methods=['GET', 'POST'])
-def order_sent():
-    return render_template('order_sent.html')
-
-@app.route('/gallery', methods=['GET', 'POST'])
-def gallery_page():
-    galleries_data = load_gallery_data('img/rugs')
-    return render_template('gallery.html', galleries_data=galleries_data, gallery_size='large')
-
-@app.route('/render', methods=['GET', 'POST'])
-def render_page():
-    galleries_data = load_gallery_data('img/ai')
-    return render_template('gallery.html', galleries_data=galleries_data, gallery_size='small')
-
-@app.route('/order', methods=['GET', 'POST'])
-def order_page():
-    return render_template('order.html')
-
-@app.route('/message', methods=['GET', 'POST'])
-def message_page():
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_login():
     if request.method == 'POST':
-        message = request.form['message']
-        filename = generate_filename('messages/m.txt')
-        with open(filename, 'w') as file:
-            file.write(message)
-        return redirect('/message_sent')
-    return render_template('message.html')
+        username = request.form['username']
+        password = request.form['password']
+        if username == admin_username and check_password_hash(admin_password_hash, password):
+            session['logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Invalid credentials')
+    return render_template('admin_login.html')  # Your login page template
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    with open('data/update.log', 'r') as logfile:
+        log_content = logfile.read()
+
+    message_count = count_message_files()
+    order_count = count_order_files()
+    return render_template('admin_dashboard.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count, order_count=order_count)
+
+@app.route('/admin/thumbnail',  methods=['GET', 'POST'])
+@admin_required
+def do_the_thumbnails():
+    check_all_thumbnails('img/ai/', (256, 256))
+    check_all_thumbnails('img/rugs/', (512, 512))
+    return '<html>the thumbnail creation is done!</html>'
+
+@app.route('/admin/update', methods=['GET', 'POST'])
+@admin_required
+def update_server():
+    subprocess.run('python3 updater.py', shell=True)
+    return '<html>Updated!</html>'
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('admin_login'))
 
 #-------------------------------------------------------------------
 # api routes

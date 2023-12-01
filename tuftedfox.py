@@ -35,7 +35,7 @@ class PageHit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     page_url = db.Column(db.String(500))
     hit_type = db.Column(db.String(50)) # 'image', 'valid', 'invalid'
-    visit_date = db.Column(db.Date, default=datetime.utcnow().date())
+    visit_datetime = db.Column(db.DateTime, default=datetime.utcnow)
     visitor_id = db.Column(db.String(100)) # IP or session ID
 
 #-------------------------------------------------------------------

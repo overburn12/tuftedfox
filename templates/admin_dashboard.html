@@ -41,11 +41,15 @@
 {% block content %}
 {{ block_header('Admin Dashboard', random_icon)}}
 <center>
+    <p id="uptime"></p>
     <div id="admin-links">
-        &bull; <a href="/admin/thumbnail" class="dashboard-link">Update Thumbnails</a><br>
-        &bull; <a href="/admin/update" class="dashboard-link">Update Server</a><br>
+        &bull; <a href="/admin/messages">Messages</a><br>
+        &bull; <a href="/admin/orders">Orders</a><br>
         ----------------------------<br>
-        &bull; <a href="/logout" class="logout-button">Logout</a><br>
+        &bull; <a href="/admin/thumbnail">Update Thumbnails</a><br>
+        &bull; <a href="/admin/update">Update Server</a><br>
+        ----------------------------<br>
+        &bull; <a href="/logout">Logout</a><br>
     </div>
 </center>
 {{ block_footer()}}
@@ -59,4 +63,23 @@
     <p>Server birthdate: 11/3/2023</p>
 {{ block_footer() }}
 
+<script>
+function calculateUptime() {
+    var startTime = new Date('{{ app_start_time }}' * 1000);
+    var uptime = new Date() - startTime;
+    var seconds = Math.floor(uptime / 1000);
+    var minutes = Math.floor(seconds / 60);
+    var hours = Math.floor(minutes / 60);
+    var days = Math.floor(hours / 24);
+
+    seconds = seconds % 60;
+    minutes = minutes % 60;
+    hours = hours % 24;
+
+    document.getElementById('uptime').innerHTML = `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+}
+
+calculateUptime();
+setInterval(calculateUptime, 1000); 
+</script>
 {% endblock %}

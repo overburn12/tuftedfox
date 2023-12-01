@@ -345,6 +345,16 @@ def update_server():
     subprocess.run('python3 updater.py', shell=True)
     return '<html>Updated!</html>'
 
+@app.route('/admin/messages', methods = ['GET','POST'])
+@admin_required
+def message_center():
+    return render_template('admin_messages.html')
+
+@app.route('/admin/orders', methods = ['GET','POST'])
+@admin_required
+def order_center():
+    return render_template('admin_orders.html')
+
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)

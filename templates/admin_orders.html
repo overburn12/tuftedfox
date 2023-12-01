@@ -9,8 +9,10 @@
     <a href="/admin/dashboard"> Admin Dashboard </a>
 </div>
 
-    {{ block_header('Orders', random_icon)}}
-        <p> n/a nothin here </p>
-    {{ block_footer() }}
+{% for order in orders %}
+    {{ block_header(order.filename, random_icon)}}
+        <p>{{ order.content }} </p>
+    {{ block_footer()}}
+{% endfor %}
 
 {% endblock %}

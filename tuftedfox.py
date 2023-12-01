@@ -298,6 +298,9 @@ def count_page():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_login():
+    if 'logged_in' in session and session['logged_in']:
+        return redirect(url_for('admin_dashboard'))
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -357,7 +360,16 @@ def message_center():
 @app.route('/admin/orders', methods = ['GET','POST'])
 @admin_required
 def order_center():
-    return render_template('admin_orders.html')
+    orders = []
+    for filename in os.listdir('orders/'):
+        if filename.endswith('.txt'):
+            with open(os.path.join('orders', filename), 'r') as file:
+                order = {
+                    'filename': filename,
+                    'content': file.read()
+                }
+                orders.append(order)
+    return render_template('admin_orders.html', orders = orders)
 
 @app.route('/logout')
 def logout():

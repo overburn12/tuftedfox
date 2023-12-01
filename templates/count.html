@@ -38,7 +38,7 @@
                 <th>Page</th>
                 <th>Hits</th>
             </tr>
-            {% for page, hits in page_hits.items() %}
+            {% for page, hits in page_hits %}
             <tr>
                 <td>{{ page }}</td>
                 <td>{{ hits }}</td>
@@ -53,7 +53,7 @@
                 <th>Image Page</th>
                 <th>Hits</th>
             </tr>
-            {% for page, hits in page_hits_images.items() %}
+            {% for page, hits in page_hits_images %}
             <tr>
                 <td><a href="{{ page }}">{{ page }}</a></td>
                 <td>{{ hits }}</td>
@@ -68,7 +68,7 @@
                 <th>Page</th>
                 <th>Hits</th>
             </tr>
-            {% for page, hits in page_hits_invalid.items() %}
+            {% for page, hits in page_hits_invalid %}
             <tr>
                 <td>{{ page }}</td>
                 <td>{{ hits }}</td>

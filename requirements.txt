@@ -1,5 +1,9 @@
 Flask==3.0.0
-Pillow
+flask_sqlalchemy==3.1.1
+Pillow==9.5.0
+Pillow==9.0.1
+Pillow==10.1.0
 python-dotenv==1.0.0
-Requests==2.31.0
+SQLAlchemy==2.0.23
+webcolors==1.13
 Werkzeug==3.0.1

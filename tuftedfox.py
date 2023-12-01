@@ -1,5 +1,7 @@
 import subprocess, json, os, random, re
 from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import RequestRedirect
@@ -24,51 +26,21 @@ page_hits_invalid = {}
 UPLOAD_FOLDER = 'orders/'
 ORDER_FOLDER = 'orders/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tuftedfox.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+class PageHit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    page_url = db.Column(db.String(500))
+    hit_type = db.Column(db.String(50)) # 'image', 'valid', 'invalid'
+    visit_date = db.Column(db.Date, default=datetime.utcnow().date())
+    visitor_id = db.Column(db.String(100)) # IP or session ID
 
 #-------------------------------------------------------------------
 # functions 
 #-------------------------------------------------------------------
-
-def save_page_hits():
-    try:
-        with open('data/page_hits.json', 'w') as f:
-            json.dump(page_hits, f)
-    except IOError as e:
-        print(f"An error occurred while saving valid page hits: {e}")
-    try:
-        with open('data/page_hits_images.json', 'w') as f:
-            json.dump(page_hits_images, f)
-    except IOError as e:
-        print(f"An error occurred while saving valid image hits: {e}")
-    try:
-        with open('data/page_hits_invalid.json', 'w') as f:
-            json.dump(page_hits_invalid, f)
-    except IOError as e:
-        print(f"An error occurred while saving invalid page hits: {e}")
-
-def load_page_hits():
-    tmp_hits = {}
-    tmp_invalid = {}
-    tmp_img_hits = {}
-    try:
-        with open('data/page_hits.json', 'r') as f:
-            tmp_hits = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        tmp_hits = {}
-    try:
-        with open('data/page_hits_images.json', 'r') as f:
-            tmp_img_hits = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        tmp_img_hits = {}
-    try:
-        with open('data/page_hits_invalid.json', 'r') as f:
-            tmp_invalid = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        tmp_invalid = {}
-        
-    return tmp_hits, tmp_img_hits, tmp_invalid
-
-page_hits, page_hits_images, page_hits_invalid = load_page_hits()
 
 def generate_thumbnail(image_path, thumbnail_path, size):
     with Image.open(image_path) as img:
@@ -225,8 +197,9 @@ def count_order_files():
 
 @app.before_request
 def before_request():
-    global page_hits, page_hits_images, page_hits_invalid
     page = request.path
+    hit_type = 'none'
+    visitor_id = request.remote_addr
     ignore_list = ['thumbnail', 'icons','404','message_sent','order_sent','update','count','submit_order','upload_image','this_page_doesnt_exist']
 
     for item in ignore_list:
@@ -236,13 +209,15 @@ def before_request():
         app.url_map.bind('').match(page)
 
         if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-            page_hits_images[page] = page_hits_images.get(page, 0) + 1
+            hit_type = 'image'
         else:
-            page_hits[page] = page_hits.get(page, 0) + 1
+            hit_type = 'valid'
     except (NotFound, RequestRedirect):
-        page_hits_invalid[page] = page_hits_invalid.get(page, 0) + 1
+        hit_type = 'invalid'
     finally:
-        save_page_hits()
+        new_hit = PageHit(page_url=page, hit_type=hit_type, visitor_id=visitor_id)
+        db.session.add(new_hit)
+        db.session.commit()
 
 #-------------------------------------------------------------------
 # page routes
@@ -280,23 +255,29 @@ def update_server():
 
 @app.route('/count', methods=['GET', 'POST'])
 def count_page():
-    # Sort the valid page hits (excluding images) alphabetically by path name
-    sorted_page_hits = sorted(page_hits.items(), key=lambda item: item[0])
-    sorted_page_hits_dict = dict(sorted_page_hits)
+    # Query and tally the valid page hits (excluding images)
+    valid_hits = db.session.query(
+        PageHit.page_url, 
+        func.count(PageHit.id)
+    ).filter(PageHit.hit_type == 'valid').group_by(PageHit.page_url).all()
 
-    # Sort the image page hits alphabetically by path name
-    sorted_page_hits_images = sorted(page_hits_images.items(), key=lambda item: item[0])
-    sorted_page_hits_images_dict = dict(sorted_page_hits_images)
+    # Query and tally the image page hits
+    image_hits = db.session.query(
+        PageHit.page_url, 
+        func.count(PageHit.id)
+    ).filter(PageHit.hit_type == 'image').group_by(PageHit.page_url).all()
 
-    # Sort the invalid page hits alphabetically by path name
-    sorted_page_hits_invalid = sorted(page_hits_invalid.items(), key=lambda item: item[0])
-    sorted_page_hits_invalid_dict = dict(sorted_page_hits_invalid)
+    # Query and tally the invalid page hits
+    invalid_hits = db.session.query(
+        PageHit.page_url, 
+        func.count(PageHit.id)
+    ).filter(PageHit.hit_type == 'invalid').group_by(PageHit.page_url).all()
 
-    # Pass all three dictionaries to the template
+    # Pass the tallied hits to the template
     return render_template('count.html',
-                           page_hits=sorted_page_hits_dict,
-                           page_hits_images=sorted_page_hits_images_dict,
-                           page_hits_invalid=sorted_page_hits_invalid_dict)
+                           page_hits=valid_hits,
+                           page_hits_images=image_hits,
+                           page_hits_invalid=invalid_hits)
 
 @app.route('/custom', methods=['GET', 'POST'])
 def custom_page():
@@ -412,6 +393,9 @@ def page_not_found(e):
     return render_template('404.html', image_path=image_path), 404
 
 #-------------------------------------------------------------------
+
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
     host = os.environ.get('HOST', '0.0.0.0')

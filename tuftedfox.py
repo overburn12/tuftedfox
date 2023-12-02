@@ -419,12 +419,21 @@ def hits_per_minute_data():
     # Define the time range for the last 24 hours
     time_threshold = datetime.utcnow() - timedelta(hours=24)
 
-    # Query to find hits per minute for the last 24 hours using SQLite's strftime function
+    # Step 1: Get unique IPs in the last 24 hours
+    unique_ips = db.session.query(PageHit.visitor_id)\
+        .filter(PageHit.visit_datetime >= time_threshold)\
+        .distinct()\
+        .subquery()
+
+    # Step 2: Count hits per minute for these IPs
     results = db.session.query(
         func.strftime('%Y-%m-%d %H:%M', PageHit.visit_datetime).label('minute'),
         func.count().label('hits')
-    ).filter(PageHit.visit_datetime >= time_threshold)\
-    .group_by('minute')\
+    ).filter(
+        PageHit.visit_datetime >= time_threshold,
+        PageHit.visitor_id.in_(unique_ips)
+    ).group_by('minute')\
+    .order_by('minute')\
     .all()
 
     # Convert results to a format suitable for JSON

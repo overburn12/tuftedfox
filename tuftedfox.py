@@ -1,8 +1,8 @@
 import subprocess, json, os, random, re
 from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func, not_
 from functools import wraps
-from sqlalchemy import func
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import RequestRedirect
@@ -270,17 +270,31 @@ def message_sent():
 
 @app.route('/count', methods=['GET', 'POST'])
 def count_page():
-    # Query and tally the valid page hits (excluding images)
+
+    # Query and tally the valid page hits
+    exclude_words = ['admin', '404', 'thumbnail', 'icon', 'logout']
     valid_hits = db.session.query(
-        PageHit.page_url, 
+        PageHit.page_url,
         func.count(PageHit.id)
-    ).filter(PageHit.hit_type == 'valid').group_by(PageHit.page_url).all()
+    ).filter(
+        PageHit.hit_type == 'valid',
+        ~PageHit.page_url.ilike(f'%{exclude_words[0]}%') if exclude_words else False,
+        *[
+            ~PageHit.page_url.ilike(f'%{word}%') for word in exclude_words[1:]
+        ]
+    ).group_by(PageHit.page_url).all()
 
     # Query and tally the image page hits
     image_hits = db.session.query(
         PageHit.page_url, 
         func.count(PageHit.id)
-    ).filter(PageHit.hit_type == 'image').group_by(PageHit.page_url).all()
+    ).filter(
+        PageHit.hit_type == 'image',
+        ~PageHit.page_url.ilike(f'%{exclude_words[0]}%') if exclude_words else False,
+        *[
+            ~PageHit.page_url.ilike(f'%{word}%') for word in exclude_words[1:]
+        ]
+    ).group_by(PageHit.page_url).all()
 
     # Query and tally the invalid page hits
     invalid_hits = db.session.query(
@@ -292,10 +306,10 @@ def count_page():
                         .filter(PageHit.hit_type.in_(['valid', 'image']))\
                         .scalar()
     
-    unique_ips = PageHit.query.filter((PageHit.hit_type == 'valid') | (PageHit.hit_type == 'image')) \
-                          .distinct(PageHit.visitor_id) \
-                          .with_entities(PageHit.visitor_id) \
-                          .all()
+    #unique_ips = PageHit.query.filter((PageHit.hit_type == 'valid') | (PageHit.hit_type == 'image')) \
+    #                      .distinct(PageHit.visitor_id) \
+    #                      .with_entities(PageHit.visitor_id) \
+    #                      .all()
 
     # Pass the tallied hits to the template
     return render_template('count.html',

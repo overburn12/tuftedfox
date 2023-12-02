@@ -1,7 +1,7 @@
 import subprocess, json, os, random, re
 from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, not_
+from sqlalchemy import func, cast, Date
 from functools import wraps
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
@@ -394,6 +394,24 @@ def order_center():
                 }
                 orders.append(order)
     return render_template('admin_orders.html', orders = orders)
+
+@app.route('/admin/count')
+@admin_required
+def admin_count():
+    return render_template('admin_count.html')
+
+@app.route('/api/hits')
+@admin_required
+def hits_data():
+    # Query to find unique hits per day
+    results = db.session.query(
+        func.date(PageHit.visit_datetime).label('date'), 
+        func.count(PageHit.visitor_id.distinct()).label('unique_hits')
+    ).group_by(func.date(PageHit.visit_datetime)).all()
+
+    # Convert results to a format suitable for JSON
+    data = [{'date': str(result.date), 'unique_hits': result.unique_hits} for result in results]
+    return jsonify(data)
 
 @app.route('/logout')
 def logout():

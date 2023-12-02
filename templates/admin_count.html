@@ -10,38 +10,66 @@
 {% endblock %}
 
 {% block content %}
-<div class="element-block" style="width: 200px;">
-    <a href="/admin/dashboard"> Admin Dashboard </a>
-</div>
+    <div class="element-block" style="width: 200px;">
+        <a href="/admin/dashboard"> Admin Dashboard </a>
+    </div>
 
     {{ block_header('Daily Page hits', random_icon)}}
-    <canvas id="hitsChart" width="400" height="200"></canvas>
-    <script>
-    fetch('/api/hits')
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('hitsChart').getContext('2d');
-            const chart = new Chart(ctx, {
-                type: 'line', // or 'bar' depending on your preference
-                data: {
-                    labels: data.map(item => item.date),
-                    datasets: [{
-                        label: 'Unique Hits per Day',
-                        data: data.map(item => item.unique_hits),
-                        // Add additional styling as needed
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+        <canvas id="hitsChart" width="400" height="200"></canvas>
+        <script>
+        fetch('/api/hits')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('hitsChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'line', // or 'bar' depending on your preference
+                    data: {
+                        labels: data.map(item => item.date),
+                        datasets: [{
+                            label: 'Unique Hits per Day',
+                            data: data.map(item => item.unique_hits),
+                            // Add additional styling as needed
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
+                });
             });
-        });
-    </script>
-    
+        </script>
+    {{ block_footer() }}
+
+    {{ block_header('24hr Page Hits', random_icon)}}
+        <canvas id="hitsPerMinuteChart" width="400" height="200"></canvas>
+        <script>
+        fetch('/api/hits-per-minute')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('hitsPerMinuteChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'line', // or 'bar'
+                    data: {
+                        labels: data.map(item => item.minute),
+                        datasets: [{
+                            label: 'Page Hits per Minute (Last 24 Hours)',
+                            data: data.map(item => item.hits),
+                            // Add additional styling as needed
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
     {{ block_footer() }}
 
 {% endblock %}

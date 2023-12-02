@@ -7,7 +7,7 @@ from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import RequestRedirect
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from PIL import Image
 import random
@@ -411,6 +411,25 @@ def hits_data():
 
     # Convert results to a format suitable for JSON
     data = [{'date': str(result.date), 'unique_hits': result.unique_hits} for result in results]
+    return jsonify(data)
+
+@app.route('/api/hits-per-minute')
+@admin_required
+def hits_per_minute_data():
+    # Define the time range for the last 24 hours
+    time_threshold = datetime.utcnow() - timedelta(hours=24)
+
+    # Query to find unique IP hits per minute for the last 24 hours
+    results = db.session.query(
+        func.strftime('%Y-%m-%d %H:%M', PageHit.visit_datetime).label('minute'),
+        func.count(PageHit.visitor_id.distinct()).label('unique_hits')
+    ).filter(PageHit.visit_datetime >= time_threshold)\
+    .group_by('minute')\
+    .order_by('minute')\
+    .all()
+
+    # Convert results to a format suitable for JSON
+    data = [{'minute': result.minute, 'unique_hits': result.unique_hits} for result in results]
     return jsonify(data)
 
 @app.route('/logout')

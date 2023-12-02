@@ -288,11 +288,16 @@ def count_page():
         func.count(PageHit.id)
     ).filter(PageHit.hit_type == 'invalid').group_by(PageHit.page_url).all()
 
+    total_unique = db.session.query(func.count(PageHit.visitor_id.distinct()))\
+                        .filter(PageHit.hit_type.in_(['valid', 'image']))\
+                        .scalar()
+    
     # Pass the tallied hits to the template
     return render_template('count.html',
                            page_hits=valid_hits,
                            page_hits_images=image_hits,
-                           page_hits_invalid=invalid_hits)
+                           page_hits_invalid=invalid_hits,
+                           total_unique=total_unique)
 
 #--------------------------------------------
 

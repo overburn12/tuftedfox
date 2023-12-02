@@ -32,6 +32,10 @@
 {% endblock %}
 
 {% block content %}
+    <div class = 'element-block'>
+        <p>{{total_unique}} total unique visitors</p>
+    </div>
+
     {{ block_header('Page Hits', random_icon)}}
         <table class="hits_table">
             <tr>

@@ -297,19 +297,12 @@ def count_page():
                           .with_entities(PageHit.visitor_id) \
                           .all()
 
-    if 'logged_in' in session and session['logged_in']:
-        # Extract the IP addresses from the query result
-        ip_list = [ip[0] for ip in unique_ips]
-    else:
-        ip_list = []
-
     # Pass the tallied hits to the template
     return render_template('count.html',
                            page_hits=valid_hits,
                            page_hits_images=image_hits,
                            page_hits_invalid=invalid_hits,
-                           total_unique=total_unique,
-                           ip_list=ip_list)
+                           total_unique=total_unique)
 
 #--------------------------------------------
 

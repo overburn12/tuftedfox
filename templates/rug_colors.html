@@ -50,7 +50,10 @@
     {{block_header_simple()}}     
     <div id="imageDisplay">
         <canvas id="imageCanvas" style="max-width: 1024px; max-height: 100%; border: 1px solid black;"></canvas>
-        <div id="eyedropper_rgb"></div><div id="rgb_div"></div>
+        <div>
+            <div id="eyedropper_rgb"></div>
+            <div id="rgb_div"></div>
+        </div>
     </div>
 
     {{block_footer()}}
@@ -84,14 +87,13 @@
     {{block_header_simple()}}
     <div style="width: 500px;">
         <p>
-            Hello, this is an image analysis app im writing in my spare time. It tallys up how many pixels represent what color.
-            then for each color, it calculates the area of the image taken up by that color. This app should work with pixel transparency.
-            If a rug image contains transparency then those transparent pixels will not count towards total rug weight and yarn consumption.
+            Hello, this is an image analysis app im writing in my spare time. Essentially, it tallys up how many pixels represent what color.
+            Any transparent pixels will not count towards total rug weight or area.
             Thus, this app can be use to calculate yarn consumption and actual sqft for cut-out rugs with irregular shapes.
         </p>
         <p>
-            Please note that this image analyzer only works with discreet RGB values. 
-            the images used should have completely flat colors with no shading or gradients.
+            Please note that this image analyzer only works with discreet RGB values. (128,128,128) is different than (127,128,128). 
+            The image used should have completely flat colors with no shading or gradients.
             If there is any shading or gradient then it will have hundreds possibly thousands of color entries in the color table. 
         </p>
     </div>

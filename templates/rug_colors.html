@@ -48,7 +48,6 @@
 
 {% block content %}
     {{block_header_simple()}}     
-    <p>Click anywhere on the image to grab the pixel RGB, and highlight the corresponding entry in the colors table.</p>
     <div id="imageDisplay">
         <canvas id="imageCanvas" style="max-width: 1024px; max-height: 100%; border: 1px solid black;"></canvas>
         <div style="width: 200px;">
@@ -56,9 +55,10 @@
             <div id="rgb_div"></div>
         </div>
     </div>
-
+    
     {{block_footer()}}
-
+    
+    <p>Click anywhere on the image to grab the pixel RGB, and highlight the corresponding entry in the colors table.</p>
 
     {{block_header_simple()}}
         <div style="display: flex; flex-direction: row; align-items: flex-start;">

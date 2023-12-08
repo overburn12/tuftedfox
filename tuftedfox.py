@@ -1,7 +1,7 @@
 import subprocess, json, os, random, re
 from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func
 from functools import wraps
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
@@ -33,7 +33,6 @@ ORDER_FOLDER = 'orders/'
 UPLOAD_FOLDER = 'orders/'
 
 load_dotenv()
-secret_password = os.getenv('SECRET_PASSWORD')
 app.secret_key = os.getenv('SECRET_KEY')
 admin_username = os.getenv('ADMIN_NAME')
 admin_password = os.getenv('ADMIN_PASSWORD')
@@ -318,6 +317,9 @@ def count_page():
                            page_hits_invalid=invalid_hits,
                            total_unique=total_unique)
 
+@app.route('/analysis', methods=['GET','POST'])
+def image_analysis_page():
+    return render_template('rug_colors.html')
 #--------------------------------------------
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -528,8 +530,8 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    host = os.environ.get('HOST', '0.0.0.0')
-    port = int(os.environ.get('PORT', 8081))
+    host = os.environ.get('HOST')
+    port = int(os.environ.get('PORT'))
     debug = os.environ.get('DEBUG', 'False').lower() == 'true'
     app.debug = debug
     app.run(host=host, port=port)

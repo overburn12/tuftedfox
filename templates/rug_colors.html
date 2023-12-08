@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% macro block_header_simple() %}
+  <div class="element-block">
+      <div class="element-content">
+{% endmacro %}
+
+{% macro block_footer() %}
+</div></div>
+{% endmacro %}
+
+
+{% block title %}
+    TuftedFox - Image Color Analysis
+{% endblock %}
+
+{% block head %}
+    <style>
+        body{
+            background-color: blanchedalmond;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .image-border {
+            border: 1px solid black;
+        }
+        .highlight {
+            background-color: yellow; /* or any highlighting style you prefer */
+        }
+        #output_content, #input_content{
+            display: flex; /* Use flexbox to arrange children side by side */
+            justify-content: center; /* Center the children horizontally */
+            align-items: start; /* Align children to the start of the cross axis */
+            flex-wrap: wrap;
+        }
+        #colorResults, #imageDisplay{
+            padding: 20px;
+        }
+
+        #rugHeight, #rugWidth, #colorsUsed {
+            width: 100px;  /* Adjust this value as needed */
+        }
+        #rgb_div{
+            width: 40px;
+            height: 20px;
+            border-radius: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {{block_header_simple()}}     
+    <div id="imageDisplay">
+        <canvas id="imageCanvas" style="max-width: 1024px; max-height: 100%; border: 1px solid black;"></canvas>
+        <div id="eyedropper_rgb"></div><div id="rgb_div"></div>
+    </div>
+
+    {{block_footer()}}
+
+
+    {{block_header_simple()}}
+        <div style="display: flex; flex-direction: row; align-items: flex-start;">
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <form>
+                    <label for="imageUpload">Select image:</label>
+                    <input type="file" id="imageUpload"><br><br>
+                    <label for="rugHeight">Height (in inches):</label>
+                    <input type="number" id="rugHeight" value="12"><br><br>
+                    <label for="rugWidth">Width (in inches):</label>
+                    <input type="number" id="rugWidth" value="12"><br><br>
+                    <label for="colorsUsed">Number of Colors:</label>
+                    <input type="number" id="colorsUsed" min="1" value="20"><br><br>
+                    <label for="yarnConsumption">Yarn Usage (oz per sqft):</label>
+                    <input type="number" id="yarnConsumption" min="3" max="16" value="6"><br><br>
+                </form>
+                <div id="text_output">-calculation results display here-</div>    
+            </div>   
+            <div style="overflow-y: auto; height: 400px;">
+                <div id="colorResults">
+                    <!-- Color analysis results will be displayed here -->
+                </div>
+            </div>
+        </div>
+    {{block_footer()}}
+    <br><br><br>
+
+
+
+    <script>
+        var imageAspectRatio = null; // Global variable to store the aspect ratio
+        var apiResponseData = null; // Global variable to store API response data
+        var transparentPercentage = 0;
+        
+        document.getElementById('imageUpload').addEventListener('change', function(event) {
+            var file = event.target.files[0];
+            if (file) {
+                // Handle the file for server-side processing
+                var formData = new FormData();
+                formData.append('image', file);
+        
+                // Send this file to the server
+                fetch('https://tuftedfox.com/rugcolor/analyze', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    apiResponseData = data;  // Handle the response
+                    handleInputChange();
+                })
+                .catch(error => console.error('Error:', error));
+        
+                // Draw the image onto a canvas for client-side interaction
+                var img = new Image();
+                img.onload = function() {
+                    imageAspectRatio = img.naturalWidth / img.naturalHeight;
+                    var canvas = document.getElementById('imageCanvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    var context = canvas.getContext('2d', { willReadFrequently: true });
+                    context.drawImage(img, 0, 0);
+                    canvas.style.display = 'block';
+                    var rugHeightElement = document.getElementById('rugHeight');
+                    var rugWidthElement = document.getElementById('rugWidth');
+                    if (imageAspectRatio && rugWidthElement.value) {
+                        var newHeight = rugWidthElement.value / imageAspectRatio;
+                        rugHeightElement.value = newHeight.toFixed(1);
+                    }
+                };
+                img.src = URL.createObjectURL(file);
+            }
+        });
+        
+    //------------------------------------------------------------------
+
+        document.getElementById('imageCanvas').addEventListener('click', function(event) {
+            var canvas = this;
+            var boundingRect = canvas.getBoundingClientRect();
+
+            // Calculate the scale factor
+            var scaleX = canvas.width / boundingRect.width;
+            var scaleY = canvas.height / boundingRect.height;
+
+            // Adjust click coordinates
+            var x = (event.clientX - boundingRect.left) * scaleX;
+            var y = (event.clientY - boundingRect.top) * scaleY;
+
+            var context = canvas.getContext('2d');
+            var pixel = context.getImageData(x, y, 1, 1).data;
+
+            var rgbString;
+            
+            if(pixel[3] < 16){
+                rgbString = '-1,-1,-1';
+                document.getElementById('eyedropper_rgb').textContent = "transparency";
+                document.getElementById('rgb_div').style.backgroundColor = 'transparent';
+            }else{
+                var rgb = 'RGB(' + pixel[0] + ', ' + pixel[1] + ', ' + pixel[2] + ')';
+                document.getElementById('eyedropper_rgb').textContent = rgb;
+                document.getElementById('rgb_div').style.backgroundColor = 'rgb(' + pixel[0] + ', ' + pixel[1] + ', ' + pixel[2] + ')';
+                rgbString = pixel.slice(0, 3).join(','); 
+            }
+            
+            document.querySelectorAll('#colorResults tr.highlight').forEach(function(row) {
+                row.classList.remove('highlight');
+            });
+            var matchingRow = document.querySelector('#colorResults tr[data-rgb="' + rgbString + '"]');
+            if (matchingRow) {
+                matchingRow.classList.add('highlight');
+            }
+        });
+
+        document.getElementById('rugHeight').addEventListener('input', function(event) {
+            if (imageAspectRatio && event.target.value) {
+                var newWidth = event.target.value * imageAspectRatio;
+                document.getElementById('rugWidth').value = newWidth.toFixed(1);
+            }
+        });
+        
+        document.getElementById('rugWidth').addEventListener('input', function(event) {
+            if (imageAspectRatio && event.target.value) {
+                var newHeight = event.target.value / imageAspectRatio;
+                document.getElementById('rugHeight').value = newHeight.toFixed(1);
+            }
+        });
+
+        document.getElementById('rugHeight').addEventListener('input', handleInputChange);
+        document.getElementById('rugWidth').addEventListener('input', handleInputChange);
+        document.getElementById('colorsUsed').addEventListener('input', handleInputChange);
+        document.getElementById('yarnConsumption').addEventListener('input', handleInputChange);
+
+        function handleInputChange() {
+            updateColors();  // Perform and display color analysis
+            updateSquareFootage();  // Update square footage
+        }
+
+        function updateColors(){
+            var colorsUsed = parseInt(document.getElementById('colorsUsed').value, 0);
+            if (apiResponseData) {
+                var dataToDisplay = apiResponseData;
+                if (colorsUsed > 0) {
+                    dataToDisplay = apiResponseData.slice(0, colorsUsed);
+                }
+                displayResults(dataToDisplay);
+            } else {
+                console.error('No data available. Please upload an image first.');
+            }
+        }
+
+        function updateSquareFootage() {
+            var rugHeightInInches = parseFloat(document.getElementById('rugHeight').value);
+            var rugWidthInInches = parseFloat(document.getElementById('rugWidth').value);
+        
+            if (!isNaN(rugHeightInInches) && !isNaN(rugWidthInInches)) {
+                var squareFeet = (rugHeightInInches * rugWidthInInches) / 144; // 1 square foot = 144 square inches
+                var rugHeightFeet = Math.floor(rugHeightInInches / 12);
+                var rugHeightRemainingInches = rugHeightInInches % 12;
+                var rugWidthFeet = Math.floor(rugWidthInInches / 12);
+                var rugWidthRemainingInches = rugWidthInInches % 12;
+                var yarnConsumptionRate = parseFloat(document.getElementById('yarnConsumption').value);
+                var rugTotalWeight = squareFeet * yarnConsumptionRate;
+        
+                if(transparentPercentage > 0.0){
+                    var transparentWeight = rugTotalWeight * (transparentPercentage / 100);
+                    var transparentArea = squareFeet * (transparentPercentage / 100);
+                    rugTotalWeight = rugTotalWeight - transparentWeight;
+                    squareFeet = squareFeet - transparentArea;
+
+                    var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
+                                    'Yarn Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
+                                    'Transparent Area: ' + transparentArea.toFixed(2) + ' sqft<br>' +
+                                    'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
+                                    'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
+                                                    rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
+                }else{
+                    var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
+                                    'Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
+                                    'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
+                                    'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
+                                                    rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
+                }
+
+                document.getElementById('text_output').innerHTML = outputText; 
+            } else {
+                document.getElementById('text_output').innerHTML = 'Enter both height and width to calculate aspect ratio, square feet, and dimensions.';
+            }
+        }
+        
+        function displayResults(colorDataList) {
+            var rugHeight = parseFloat(document.getElementById('rugHeight').value);
+            var rugWidth = parseFloat(document.getElementById('rugWidth').value);
+            
+            var yarnConsumptionRate = parseFloat(document.getElementById('yarnConsumption').value);
+            var totalArea = rugHeight * rugWidth; 
+        
+            var outputArea = document.getElementById('colorResults');
+            outputArea.innerHTML = ''; // Clear previous results
+        
+            var table = document.createElement('table');
+            table.style.width = '100%';
+            table.setAttribute('border', '1');
+        
+            // Add table header
+            var thead = table.createTHead();
+            var headerRow = thead.insertRow();
+            var headers = ["#", "Color", "RGB", "Percentage", "Weight (oz)", "Pixel Count"];
+            headers.forEach(function(headerText) {
+                var headerCell = document.createElement("th");
+                headerCell.textContent = headerText;
+                headerRow.appendChild(headerCell);
+            });
+        
+            var tbody = table.createTBody();
+            transparentPercentage = 0; //reset the transparency percentage
+        
+            colorDataList.forEach(function(colorData, index) {
+                var row = tbody.insertRow();
+                row.setAttribute('data-rgb', colorData.color.join(',')); // Set a data attribute
+
+                if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
+                    transparentPercentage = colorData.percentage; 
+                }
+
+                // Number cell
+                var numberCell = row.insertCell();
+                numberCell.textContent = index + 1; // Start numbering from 1
+        
+                // Background color cell
+                var colorCell = row.insertCell();
+                // Check if the color is the transparency indicator
+                if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
+                    colorCell.textContent = 'n/a';  // No background color
+                    colorCell.style.backgroundColor = '';  // Clear any background
+
+                    // RGB value cell for transparency
+                    var rgbCell = row.insertCell();
+                    rgbCell.textContent = 'transparency';
+                } else {
+                    // For normal colors
+                    colorCell.style.backgroundColor = `rgb(${colorData.color[0]}, ${colorData.color[1]}, ${colorData.color[2]})`;
+
+                    // RGB value cell for normal colors
+                    var rgbCell = row.insertCell();
+                    rgbCell.textContent = `(${colorData.color[0]}, ${colorData.color[1]}, ${colorData.color[2]})`;
+                }
+
+                // Percentage cell
+                var percentageCell = row.insertCell();
+                percentageCell.textContent = colorData.percentage.toFixed(2) + '%';
+                
+                // Yarn weight cell
+                var yarnWeightCell = row.insertCell();
+                if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
+                    yarnWeightCell.textContent ='n/a'
+                } else {
+                    var percentage = colorData.percentage;
+                    var yarnWeight = (percentage / 100) * (totalArea / 144) * yarnConsumptionRate;
+                    yarnWeightCell.textContent = yarnWeight.toFixed(2);
+                }
+        
+                // Count cell
+                var countCell = row.insertCell();
+                countCell.textContent = colorData.count;
+            });
+        
+            outputArea.appendChild(table);
+        }
+        
+        
+        
+    </script>
+{% endblock %}

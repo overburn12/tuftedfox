@@ -365,27 +365,20 @@
                 percentageCell.textContent = colorData.percentage.toFixed(2) + '%';
                 
                 // Yarn weight cell
-                if (unitSystem === 'metric'){
-                    var yarnWeightCell = row.insertCell();
-                    if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
-                        yarnWeightCell.textContent = 'n/a';
-                    } else {
-                        var percentage = colorData.percentage;
-                        var squareMeterArea = totalArea * 0.092903; // convert square feet to square meters
-                        var yarnConsumptionRateMetric = yarnConsumptionRate * 0.9144; // convert yards to meters
-                        var yarnWeightMetric = (percentage / 100) * squareMeterArea * yarnConsumptionRateMetric;
-                        yarnWeightCell.textContent = yarnWeightMetric.toFixed(2);
-                    }
-                }else{
-                    var yarnWeightCell = row.insertCell();
-                    if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
-                        yarnWeightCell.textContent ='n/a'
-                    } else {
-                        var percentage = colorData.percentage;
-                        var yarnWeight = (percentage / 100) * (totalArea / 144) * yarnConsumptionRate;
+                var yarnWeightCell = row.insertCell();
+                if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
+                    yarnWeightCell.textContent ='n/a'
+                } else {
+                    var percentage = colorData.percentage;
+                    var yarnWeight = (percentage / 100) * (totalArea / 144) * yarnConsumptionRate;
+                    if (unitSystem === 'metric'){
+                        var yarnWeightInGrams = yarnWeight * 28.35;
+                        yarnWeightCell.textContent = yarnWeightInGrams.toFixed(2);
+                    }else{
                         yarnWeightCell.textContent = yarnWeight.toFixed(2);
                     }
                 }
+
                     
                 // Count cell
                 var countCell = row.insertCell();

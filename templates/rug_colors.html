@@ -296,6 +296,8 @@
         }
         
         function displayResults(colorDataList) {
+            var unitSystem = document.querySelector('input[name="unitSystem"]:checked').value;
+
             var rugHeight = parseFloat(document.getElementById('rugHeight').value);
             var rugWidth = parseFloat(document.getElementById('rugWidth').value);
             
@@ -312,7 +314,12 @@
             // Add table header
             var thead = table.createTHead();
             var headerRow = thead.insertRow();
-            var headers = ["#", "Color", "RGB", "Percentage", "Weight (oz)", "Pixel Count"];
+            
+            if (unitSystem === 'metric'){
+                var headers = ["#", "Color", "RGB", "Percentage", "Weight (g)", "Pixel Count"];
+            }else{
+                var headers = ["#", "Color", "RGB", "Percentage", "Weight (oz)", "Pixel Count"];
+            }
             headers.forEach(function(headerText) {
                 var headerCell = document.createElement("th");
                 headerCell.textContent = headerText;
@@ -358,15 +365,28 @@
                 percentageCell.textContent = colorData.percentage.toFixed(2) + '%';
                 
                 // Yarn weight cell
-                var yarnWeightCell = row.insertCell();
-                if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
-                    yarnWeightCell.textContent ='n/a'
-                } else {
-                    var percentage = colorData.percentage;
-                    var yarnWeight = (percentage / 100) * (totalArea / 144) * yarnConsumptionRate;
-                    yarnWeightCell.textContent = yarnWeight.toFixed(2);
+                if (unitSystem === 'metric'){
+                    var yarnWeightCell = row.insertCell();
+                    if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
+                        yarnWeightCell.textContent = 'n/a';
+                    } else {
+                        var percentage = colorData.percentage;
+                        var squareMeterArea = totalArea * 0.092903; // convert square feet to square meters
+                        var yarnConsumptionRateMetric = yarnConsumptionRate * 0.9144; // convert yards to meters
+                        var yarnWeightMetric = (percentage / 100) * squareMeterArea * yarnConsumptionRateMetric;
+                        yarnWeightCell.textContent = yarnWeightMetric.toFixed(2);
+                    }
+                }else{
+                    var yarnWeightCell = row.insertCell();
+                    if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
+                        yarnWeightCell.textContent ='n/a'
+                    } else {
+                        var percentage = colorData.percentage;
+                        var yarnWeight = (percentage / 100) * (totalArea / 144) * yarnConsumptionRate;
+                        yarnWeightCell.textContent = yarnWeight.toFixed(2);
+                    }
                 }
-        
+                    
                 // Count cell
                 var countCell = row.insertCell();
                 countCell.textContent = colorData.count;

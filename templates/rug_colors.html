@@ -16,6 +16,9 @@
 
 {% block head %}
     <style>
+        .form-input{
+            width: 80px;
+        }
         .element-block {
             width: unset;
         }
@@ -58,36 +61,52 @@
             <div id="rgb_div"></div>
         </div>
     </div>
-    
     {{block_footer()}}
     
 
     {{block_header_simple()}}
         <div style="display: flex; flex-direction: row; align-items: flex-start;">
             <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
-                <form>
-                    <label for="imageUpload">Select image:</label>
-                    <input type="file" id="imageUpload"><br><br>
-                    <label for="rugHeight">Height (in inches):</label>
-                    <input type="number" id="rugHeight" value="12"><br><br>
-                    <label for="rugWidth">Width (in inches):</label>
-                    <input type="number" id="rugWidth" value="12"><br><br>
-                    <label for="colorsUsed">Number of Colors:</label>
-                    <input type="number" id="colorsUsed" min="1" value="20"><br><br>
-                    <label for="yarnConsumption">Yarn Usage (oz per sqft):</label>
-                    <input type="number" id="yarnConsumption" min="3" max="16" value="6"><br><br>
-                    <label for="unitSystem">Unit System:</label>
-                    <input type="radio" id="metric" name="unitSystem" value="metric">
-                    <label for="metric">Metric</label>
-                    <input type="radio" id="imperial" name="unitSystem" value="imperial" checked>
-                    <label for="imperial">Imperial</label>
-                </form>
-                <div id="text_output">-calculation results display here-</div>    
+                <input type="file" id="imageUpload" accept="image/*" value="Select Image">
+                <table>
+                    <tr>
+                        <th>Number of Colors:</th>
+                        <th><input type="number" id="colorsUsed" class="form-input" min="1" value="20"></th>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <th></th>
+                        <th>in</th>
+                        <th>cm</th>
+                    </tr>
+                    <tr>
+                        <td>Width: </td>
+                        <td><input type="number" id="rugWidthIn" class="form-input" min="1" value=""></td>
+                        <td><input type="number" id="rugWidthCm" class="form-input" min="1" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Height: </td>
+                        <td><input type="number" id="rugHeightIn" class="form-input" min="1" value=""></td>
+                        <td><input type="number" id="rugHeightCm" class="form-input" min="1" value=""></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>oz per ft^2</td>
+                        <td>g per m^2</td>
+                    </tr>
+                    <tr>
+                        <td>Yarn Usage: </td>
+                        <td><input type="number" id="yarnConsumptionRateImperial" class="form-input" value="6"></td>
+                        <td><input type="number" id="yarnConsumptionRateMetric" class="form-input" value="1"></td>
+                    </tr>
+                </table>
+                <div id="text_output"></div>    
             </div>   
-            <div style="overflow-y: auto; height: 400px;">
-                <div id="colorResults">
-                    <!-- Color analysis results will be displayed here -->
-                </div>
+                <div style="overflow-y: auto; height: 450px;">
+                    <div id="colorResults">
+                        <!-- Color analysis results will be displayed here -->
+                    </div>
             </div>
         </div>
     {{block_footer()}}
@@ -108,12 +127,21 @@
         {{block_footer()}}
     <br><br><br>
 
-
-
     <script>
         var imageAspectRatio = null; // Global variable to store the aspect ratio
         var apiResponseData = null; // Global variable to store API response data
         var transparentPercentage = 0;
+
+        var rugHeightIn = 0;
+        var rugWidthIn = 0;
+        var rugHeightCm = 0;
+        var rugWidthCm = 0;
+        var yarnConsumptionRateImperial = 0;
+        var yarnConsumptionRateMetric = 0;
+
+    //------------------------------------------------------------------------------------------
+    // image upload / api response
+    //------------------------------------------------------------------------------------------
         
         document.getElementById('imageUpload').addEventListener('change', function(event) {
             var file = event.target.files[0];
@@ -123,7 +151,7 @@
                 formData.append('image', file);
         
                 // Send this file to the server
-                fetch('/rugcolor/analyze', {
+                fetch('https://tuftedfox.com/rugcolor/analyze', {
                     method: 'POST',
                     body: formData
                 })
@@ -144,19 +172,21 @@
                     var context = canvas.getContext('2d', { willReadFrequently: true });
                     context.drawImage(img, 0, 0);
                     canvas.style.display = 'block';
-                    var rugHeightElement = document.getElementById('rugHeight');
-                    var rugWidthElement = document.getElementById('rugWidth');
-                    if (imageAspectRatio && rugWidthElement.value) {
-                        var newHeight = rugWidthElement.value / imageAspectRatio;
-                        rugHeightElement.value = newHeight.toFixed(1);
+
+                    var rugHeightElement = document.getElementById('rugHeightIn');
+                    if (imageAspectRatio && rugHeightElement.value) {
+                        rugHeightElement.dispatchEvent(new Event('input'));
                     }
                 };
                 img.src = URL.createObjectURL(file);
             }
         });
         
-    //------------------------------------------------------------------
-
+    //------------------------------------------------------------------------------------------
+    // event listeners
+    //------------------------------------------------------------------------------------------
+    
+        //rgb eye dropper click
         document.getElementById('imageCanvas').addEventListener('click', function(event) {
             var canvas = this;
             var boundingRect = canvas.getBoundingClientRect();
@@ -194,36 +224,110 @@
             }
         });
 
-        document.querySelectorAll('input[name="unitSystem"]').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                handleInputChange(); // Re-calculate when unit system changes
-            });
+        //rug height/width maintain aspect ratio
+        document.getElementById('rugHeightIn').addEventListener('input', function(event) {
+            if (imageAspectRatio && event.target.value) {
+                var tmp = event.target.value;
+                document.getElementById('rugWidthIn').value = (tmp * imageAspectRatio).toFixed(1);
+                document.getElementById('rugHeightCm').value = (tmp * 2.54).toFixed(1);
+                document.getElementById('rugWidthCm').value = (tmp * imageAspectRatio * 2.54).toFixed(1);
+            }
+        });
+        document.getElementById('rugWidthIn').addEventListener('input', function(event) {
+            if (imageAspectRatio && event.target.value) {
+                var tmp = event.target.value;
+                document.getElementById('rugHeightIn').value = (tmp / imageAspectRatio).toFixed(1);
+                document.getElementById('rugWidthCm').value =  (tmp * 2.54).toFixed(1);
+                document.getElementById('rugHeightCm').value = ((tmp / imageAspectRatio) * 2.54).toFixed(1);
+            }
+        });
+        document.getElementById('rugHeightCm').addEventListener('input', function(event) {
+            if (imageAspectRatio && event.target.value) {
+                var tmp = event.target.value;
+                document.getElementById('rugWidthCm').value = (tmp * imageAspectRatio).toFixed(1);
+                document.getElementById('rugHeightIn').value = (tmp / 2.54).toFixed(1);
+                document.getElementById('rugWidthIn').value = ((tmp * imageAspectRatio) / 2.54).toFixed(1);
+            }
+        });
+        document.getElementById('rugWidthCm').addEventListener('input', function(event) {
+            if (imageAspectRatio && event.target.value) {
+                var tmp = event.target.value;
+                document.getElementById('rugHeightCm').value = (tmp / imageAspectRatio).toFixed(1);
+                document.getElementById('rugWidthIn').value = (tmp / 2.54).toFixed(1);
+                document.getElementById('rugHeightIn').value = ((tmp / imageAspectRatio) / 2.54).toFixed(1);
+            }
         });
 
-        document.getElementById('rugHeight').addEventListener('input', function(event) {
-            if (imageAspectRatio && event.target.value) {
-                var newWidth = event.target.value * imageAspectRatio;
-                document.getElementById('rugWidth').value = newWidth.toFixed(1);
+      
+        //yarn consumption conversion 
+        document.getElementById('yarnConsumptionRateImperial').addEventListener('input', function(event) {
+            if(event.target.value){
+                let yarnConsumptionRateImperial = parseFloat(event.target.value);
+                let yarnConsumptionRateMetric = (yarnConsumptionRateImperial * 28.3495 / 0.092903).toFixed(0);
+                document.getElementById('yarnConsumptionRateMetric').value = yarnConsumptionRateMetric;
             }
+        }); 
+        document.getElementById('yarnConsumptionRateMetric').addEventListener('input', function(event) {
+            if(event.target.value){
+                let yarnConsumptionRateMetric = parseFloat(event.target.value);
+                let yarnConsumptionRateImperial = (yarnConsumptionRateMetric * 0.092903 / 28.3495).toFixed(1);
+                document.getElementById('yarnConsumptionRateImperial').value = yarnConsumptionRateImperial;
+            }            
+        });
+
+        //event listeners to update output when any inputs changes
+        document.getElementById('rugHeightIn').addEventListener('input', handleInputChange);
+        document.getElementById('rugWidthIn').addEventListener('input', handleInputChange);
+        document.getElementById('rugHeightCm').addEventListener('input', handleInputChange);
+        document.getElementById('rugWidthCm').addEventListener('input', handleInputChange);
+
+        document.getElementById('colorsUsed').addEventListener('input', handleInputChange);
+
+        document.getElementById('yarnConsumptionRateImperial').addEventListener('input', handleInputChange);
+        document.getElementById('yarnConsumptionRateMetric').addEventListener('input', handleInputChange);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeRate();
+            initializeSize();
+            grabAllVars();
         });
         
-        document.getElementById('rugWidth').addEventListener('input', function(event) {
-            if (imageAspectRatio && event.target.value) {
-                var newHeight = event.target.value / imageAspectRatio;
-                document.getElementById('rugHeight').value = newHeight.toFixed(1);
-            }
-        });
-
-        document.getElementById('rugHeight').addEventListener('input', handleInputChange);
-        document.getElementById('rugWidth').addEventListener('input', handleInputChange);
-        document.getElementById('colorsUsed').addEventListener('input', handleInputChange);
-        document.getElementById('yarnConsumption').addEventListener('input', handleInputChange);
-
-        function handleInputChange() {
-            updateColors();  // Perform and display color analysis
-            updateSquareFootage();  // Update square footage
+        //------------------------------------------------------------------------------------------
+        // functions
+        //------------------------------------------------------------------------------------------
+        function initializeSize() {
+            var defaultRugHeightIn = 12;            
+            var rugHeightInputElement = document.getElementById('rugHeightIn');
+            rugHeightInputElement.value = defaultRugHeightIn;
+            rugHeightInputElement.dispatchEvent(new Event('input'));
+                
+        }
+        
+        function initializeRate(){
+            var defaultYarnConsumptionRateImperial = 6;
+            var yarnConsumptionRateImperialElement = document.getElementById('yarnConsumptionRateImperial');
+            yarnConsumptionRateImperialElement.value = defaultYarnConsumptionRateImperial;
+            yarnConsumptionRateImperialElement.dispatchEvent(new Event('input'));
         }
 
+        //update the global vars from the form inputs
+        function grabAllVars(){
+            rugHeightIn = parseFloat(document.getElementById('rugHeightIn').value);
+            rugWidthIn = parseFloat(document.getElementById('rugWidthIn').value);
+            rugHeightCm = parseFloat(document.getElementById('rugHeightCm').value);
+            rugWidthCm = parseFloat(document.getElementById('rugWidthCm').value);
+            yarnConsumptionRateImperial = parseFloat(document.getElementById('yarnConsumptionRateImperial').value);
+            yarnConsumptionRateMetric = parseFloat(document.getElementById('yarnConsumptionRateMetric').value);
+        }
+
+        //how to update the outputs
+        function handleInputChange() {
+            grabAllVars();
+            updateColors(); 
+            updateSquareFootage();  
+        }
+
+        //generates the color table by selecting how many colors the user wants
         function updateColors(){
             var colorsUsed = parseInt(document.getElementById('colorsUsed').value, 0);
             if (apiResponseData) {
@@ -232,78 +336,58 @@
                     dataToDisplay = apiResponseData.slice(0, colorsUsed);
                 }
                 displayResults(dataToDisplay);
-            } else {
-                console.error('No data available. Please upload an image first.');
             }
         }
 
+        //generate the rug details based on user inputs
         function updateSquareFootage() {
-            var unitSystem = document.querySelector('input[name="unitSystem"]:checked').value;
-            var rugHeightInInches = parseFloat(document.getElementById('rugHeight').value);
-            var rugWidthInInches = parseFloat(document.getElementById('rugWidth').value);
-        
-            if (!isNaN(rugHeightInInches) && !isNaN(rugWidthInInches)) {
-                var squareFeet = (rugHeightInInches * rugWidthInInches) / 144; // 1 square foot = 144 square inches
-                var rugHeightFeet = Math.floor(rugHeightInInches / 12);
-                var rugHeightRemainingInches = rugHeightInInches % 12;
-                var rugWidthFeet = Math.floor(rugWidthInInches / 12);
-                var rugWidthRemainingInches = rugWidthInInches % 12;
-                var yarnConsumptionRate = parseFloat(document.getElementById('yarnConsumption').value);
-                var rugTotalWeight = squareFeet * yarnConsumptionRate;
+            if (!isNaN(rugHeightIn) && !isNaN(rugWidthIn)) {
+                
+                //calculate feet-inches
+                var rugHeightFeet = Math.floor(rugHeightIn / 12);
+                var rugHeightRemainingInches = rugHeightIn % 12;
+                var rugWidthFeet = Math.floor(rugWidthIn / 12);
+                var rugWidthRemainingInches = rugWidthIn % 12;
+                
+                var squareFeet = (rugHeightIn * rugWidthIn) / 144; // 1 square foot = 144 square inches
+                var transparentSquareFeet = squareFeet * (transparentPercentage / 100);
+                squareFeet = squareFeet - transparentSquareFeet;
+                var rugTotalWeightOunces = squareFeet * yarnConsumptionRateImperial;
 
-        
-                if(transparentPercentage > 0.0){
-                    var transparentWeight = rugTotalWeight * (transparentPercentage / 100);
-                    var transparentArea = squareFeet * (transparentPercentage / 100);
-                    rugTotalWeight = rugTotalWeight - transparentWeight;
-                    squareFeet = squareFeet - transparentArea;
+                var squareMeters = (rugHeightCm / 100) * (rugWidthCm /100);
+                var transparentSquareMeters = squareMeters * (transparentPercentage / 100);
+                squareMeters = squareMeters - transparentSquareMeters;
+                var rugTotalWeightKg = squareMeters * yarnConsumptionRateMetric;
 
-                    if (unitSystem === 'metric'){
-                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
-                                        'Yarn Area: ' + (squareFeet * 0.092903).toFixed(2) + ' sqm<br>' +
-                                        'Transparent Area: ' + (transparentArea * 0.092903).toFixed(2) + ' sqm<br>' +
-                                        'Yarn Used: ' + (rugTotalWeight * 28.3495).toFixed(2) + ' g<br>' +
-                                        'Dimensions: ' + (rugWidthFeet * 0.3048).toFixed(2) + 'm ' + (rugWidthRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm x ' +
-                                        (rugHeightFeet * 0.3048).toFixed(2) + 'm ' + (rugHeightRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm';
-                    }else{
-                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
-                                        'Yarn Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
-                                        'Transparent Area: ' + transparentArea.toFixed(2) + ' sqft<br>' +
-                                        'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
-                                        'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
-                                                        rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
-                    }
-                }else{
-                    if (unitSystem === 'metric'){
-                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
-                                        'Area: ' + (squareFeet * 0.092903).toFixed(2) + ' sqm<br>' +
-                                        'Yarn Used: ' + (rugTotalWeight * 28.3495).toFixed(2) + ' g<br>' +
-                                        'Dimensions: ' + (rugWidthFeet * 0.3048).toFixed(2) + 'm ' + (rugWidthRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm x ' +
-                                        (rugHeightFeet * 0.3048).toFixed(2) + 'm ' + (rugHeightRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm';
-                    }else{
-                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
-                                        'Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
-                                        'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
-                                        'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
-                                                        rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
-                                    }
-                }
+                var outputText = '<table>' +
+                    '<tr><td>Aspect Ratio:</td><td>' + imageAspectRatio.toFixed(2) + '</td></tr>' +
+
+                    '<tr><td colspan="2"><b>Metric Units</b></td></tr>' +
+                    '<tr><td>Yarn Area:</td><td>' + squareMeters.toFixed(2) + ' m^2</td></tr>' +
+                    '<tr><td>Transparent Area:</td><td>' + transparentSquareMeters.toFixed(2) + ' m^2</td></tr>' +
+                    '<tr><td>Yarn Used:</td><td>' + rugTotalWeightKg.toFixed(0) + ' g</td></tr>' +
+                    '<tr><td>Dimensions:</td><td>' + rugWidthCm + ' cm x ' + rugHeightCm + ' cm</td></tr>' +
+
+                    '<tr><td colspan="2"><b>Imperial Units</b></td></tr>' +
+                    '<tr><td>Yarn Area:</td><td>' + squareFeet.toFixed(2) + ' sqft</td></tr>' +
+                    '<tr><td>Transparent Area:</td><td>' + transparentSquareFeet.toFixed(2) + ' sqft</td></tr>' +
+                    '<tr><td>Yarn Used:</td><td>' + rugTotalWeightOunces.toFixed(2) + ' oz</td></tr>' +
+                    '<tr><td>Dimensions:</td><td>' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
+                                                    rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in</td></tr>' +
+                 '</table>';
+
 
                 document.getElementById('text_output').innerHTML = outputText; 
             } else {
-                document.getElementById('text_output').innerHTML = 'Enter both height and width to calculate aspect ratio, square feet, and dimensions.';
+                document.getElementById('text_output').innerHTML = 'n/a';
             }
         }
         
+        //generate the actual color list table
         function displayResults(colorDataList) {
-            var unitSystem = document.querySelector('input[name="unitSystem"]:checked').value;
-
-            var rugHeight = parseFloat(document.getElementById('rugHeight').value);
-            var rugWidth = parseFloat(document.getElementById('rugWidth').value);
-            
-            var yarnConsumptionRate = parseFloat(document.getElementById('yarnConsumption').value);
-            var totalArea = rugHeight * rugWidth; 
-        
+            var totalSquareFeet = (rugHeightIn * rugWidthIn) / 144;
+            var totalSquareMeters = (rugHeightCm / 100) * (rugWidthCm / 100); 
+                    
             var outputArea = document.getElementById('colorResults');
             outputArea.innerHTML = ''; // Clear previous results
         
@@ -314,12 +398,8 @@
             // Add table header
             var thead = table.createTHead();
             var headerRow = thead.insertRow();
-            
-            if (unitSystem === 'metric'){
-                var headers = ["#", "Color", "RGB", "Percentage", "Weight (g)", "Pixel Count"];
-            }else{
-                var headers = ["#", "Color", "RGB", "Percentage", "Weight (oz)", "Pixel Count"];
-            }
+            var headers = ["#", "Color", "RGB", "Percentage", "Weight (oz)", "Weight (g)", "Pixel Count"];
+
             headers.forEach(function(headerText) {
                 var headerCell = document.createElement("th");
                 headerCell.textContent = headerText;
@@ -329,6 +409,7 @@
             var tbody = table.createTBody();
             transparentPercentage = 0; //reset the transparency percentage
         
+            //where the table is generated from each api response entry
             colorDataList.forEach(function(colorData, index) {
                 var row = tbody.insertRow();
                 row.setAttribute('data-rgb', colorData.color.join(',')); // Set a data attribute
@@ -365,21 +446,20 @@
                 percentageCell.textContent = colorData.percentage.toFixed(2) + '%';
                 
                 // Yarn weight cell
-                var yarnWeightCell = row.insertCell();
+                var yarnWeightOzCell = row.insertCell();
+                var yarnWeightKgCell = row.insertCell();
+
                 if (colorData.color[0] === -1 && colorData.color[1] === -1 && colorData.color[2] === -1) {
-                    yarnWeightCell.textContent ='n/a'
+                    yarnWeightOzCell.textContent ='n/a';
+                    yarnWeightKgCell.textContent = 'n/a';
                 } else {
                     var percentage = colorData.percentage;
-                    var yarnWeight = (percentage / 100) * (totalArea / 144) * yarnConsumptionRate;
-                    if (unitSystem === 'metric'){
-                        var yarnWeightInGrams = yarnWeight * 28.35;
-                        yarnWeightCell.textContent = yarnWeightInGrams.toFixed(2);
-                    }else{
-                        yarnWeightCell.textContent = yarnWeight.toFixed(2);
-                    }
+                    var thisWeightOz = (percentage / 100) * totalSquareFeet  * yarnConsumptionRateImperial;
+                    var thisWeightKg = (percentage / 100) * totalSquareMeters * yarnConsumptionRateMetric;
+                    yarnWeightOzCell.textContent = thisWeightOz.toFixed(2);
+                    yarnWeightKgCell.textContent = thisWeightKg.toFixed(0);    
                 }
-
-                    
+  
                 // Count cell
                 var countCell = row.insertCell();
                 countCell.textContent = colorData.count;
@@ -387,8 +467,6 @@
         
             outputArea.appendChild(table);
         }
-        
-        
-        
+
     </script>
 {% endblock %}

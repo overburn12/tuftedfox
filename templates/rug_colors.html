@@ -76,6 +76,11 @@
                     <input type="number" id="colorsUsed" min="1" value="20"><br><br>
                     <label for="yarnConsumption">Yarn Usage (oz per sqft):</label>
                     <input type="number" id="yarnConsumption" min="3" max="16" value="6"><br><br>
+                    <label for="unitSystem">Unit System:</label>
+                    <input type="radio" id="metric" name="unitSystem" value="metric">
+                    <label for="metric">Metric</label>
+                    <input type="radio" id="imperial" name="unitSystem" value="imperial" checked>
+                    <label for="imperial">Imperial</label>
                 </form>
                 <div id="text_output">-calculation results display here-</div>    
             </div>   
@@ -189,6 +194,12 @@
             }
         });
 
+        document.querySelectorAll('input[name="unitSystem"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                handleInputChange(); // Re-calculate when unit system changes
+            });
+        });
+
         document.getElementById('rugHeight').addEventListener('input', function(event) {
             if (imageAspectRatio && event.target.value) {
                 var newWidth = event.target.value * imageAspectRatio;
@@ -227,6 +238,7 @@
         }
 
         function updateSquareFootage() {
+            var unitSystem = document.querySelector('input[name="unitSystem"]:checked').value;
             var rugHeightInInches = parseFloat(document.getElementById('rugHeight').value);
             var rugWidthInInches = parseFloat(document.getElementById('rugWidth').value);
         
@@ -238,6 +250,7 @@
                 var rugWidthRemainingInches = rugWidthInInches % 12;
                 var yarnConsumptionRate = parseFloat(document.getElementById('yarnConsumption').value);
                 var rugTotalWeight = squareFeet * yarnConsumptionRate;
+
         
                 if(transparentPercentage > 0.0){
                     var transparentWeight = rugTotalWeight * (transparentPercentage / 100);
@@ -245,18 +258,35 @@
                     rugTotalWeight = rugTotalWeight - transparentWeight;
                     squareFeet = squareFeet - transparentArea;
 
-                    var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
-                                    'Yarn Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
-                                    'Transparent Area: ' + transparentArea.toFixed(2) + ' sqft<br>' +
-                                    'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
-                                    'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
-                                                    rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
+                    if (unitSystem === 'metric'){
+                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
+                                        'Yarn Area: ' + (squareFeet * 0.092903).toFixed(2) + ' sqm<br>' +
+                                        'Transparent Area: ' + (transparentArea * 0.092903).toFixed(2) + ' sqm<br>' +
+                                        'Yarn Used: ' + (rugTotalWeight * 28.3495).toFixed(2) + ' g<br>' +
+                                        'Dimensions: ' + (rugWidthFeet * 0.3048).toFixed(2) + 'm ' + (rugWidthRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm x ' +
+                                        (rugHeightFeet * 0.3048).toFixed(2) + 'm ' + (rugHeightRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm';
+                    }else{
+                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
+                                        'Yarn Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
+                                        'Transparent Area: ' + transparentArea.toFixed(2) + ' sqft<br>' +
+                                        'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
+                                        'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
+                                                        rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
+                    }
                 }else{
-                    var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
-                                    'Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
-                                    'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
-                                    'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
-                                                    rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
+                    if (unitSystem === 'metric'){
+                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
+                                        'Area: ' + (squareFeet * 0.092903).toFixed(2) + ' sqm<br>' +
+                                        'Yarn Used: ' + (rugTotalWeight * 28.3495).toFixed(2) + ' g<br>' +
+                                        'Dimensions: ' + (rugWidthFeet * 0.3048).toFixed(2) + 'm ' + (rugWidthRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm x ' +
+                                        (rugHeightFeet * 0.3048).toFixed(2) + 'm ' + (rugHeightRemainingInches * 2.54 * 0.01).toFixed(0) + 'cm';
+                    }else{
+                        var outputText = 'Aspect Ratio: ' + imageAspectRatio.toFixed(2) + '<br>' +
+                                        'Area: ' + squareFeet.toFixed(2) + ' sqft<br>' +
+                                        'Yarn Used: ' + rugTotalWeight.toFixed(2) + ' oz <br>' +
+                                        'Dimensions: ' + rugWidthFeet + 'ft ' + rugWidthRemainingInches.toFixed(0) + 'in x ' + 
+                                                        rugHeightFeet + 'ft ' + rugHeightRemainingInches.toFixed(0) + 'in';
+                                    }
                 }
 
                 document.getElementById('text_output').innerHTML = outputText; 

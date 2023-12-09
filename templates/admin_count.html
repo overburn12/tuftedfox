@@ -14,62 +14,42 @@
         <a href="/admin/dashboard"> Admin Dashboard </a>
     </div>
 
-    {{ block_header('Daily Page hits', random_icon)}}
-        <canvas id="hitsChart" width="400" height="200"></canvas>
+    {{ block_header('SQL DB QUERY', random_icon)}}
+        <textarea id="queryInput"></textarea>
+        <button onclick="submitQuery()">Run Query</button>
+        <div id="queryResult"></div>
         <script>
-        fetch('/api/hits')
+        function submitQuery() {
+            const query = document.getElementById('queryInput').value;
+            fetch('/api/execute-query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: query })
+            })
             .then(response => response.json())
             .then(data => {
-                const ctx = document.getElementById('hitsChart').getContext('2d');
-                const chart = new Chart(ctx, {
-                    type: 'line', // or 'bar' depending on your preference
-                    data: {
-                        labels: data.map(item => item.date),
-                        datasets: [{
-                            label: 'Unique Hits per Day',
-                            data: data.map(item => item.unique_hits),
-                            // Add additional styling as needed
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
+                // Process and display data
+                const queryResultsDiv = document.getElementById('query_results');
+                let displayText = 'Columns: ' + data.columns.join(', ') + '\n';
+        
+                data.rows.forEach((row, index) => {
+                    displayText += 'Row ' + (index + 1) + ': ';
+                    for (const [key, value] of Object.entries(row)) {
+                        displayText += key + ': ' + value + ', ';
                     }
+                    displayText += '\n';
                 });
+        
+                queryResultsDiv.textContent = displayText;
             });
+        }
         </script>
     {{ block_footer() }}
 
-    {{ block_header('24hr Page Hits', random_icon)}}
-        <canvas id="hitsPerMinuteChart" width="400" height="200"></canvas>
-        <script>
-        fetch('/api/hits-per-minute')
-            .then(response => response.json())
-            .then(data => {
-                const ctx = document.getElementById('hitsPerMinuteChart').getContext('2d');
-                const chart = new Chart(ctx, {
-                    type: 'line', // or 'bar'
-                    data: {
-                        labels: data.map(item => item.minute),
-                        datasets: [{
-                            label: 'Page Hits per Minute (Last 24 Hours)',
-                            data: data.map(item => item.hits),
-                            // Add additional styling as needed
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            });
-        </script>
-    {{ block_footer() }}
+    {{block_header('Query Results',random_icon)}}
+        <div id="query_results"></div>
+    {{block_footer()}}
 
 {% endblock %}

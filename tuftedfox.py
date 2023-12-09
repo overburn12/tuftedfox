@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from PIL import Image
 import random
 from werkzeug.utils import secure_filename
+from sqlalchemy import text
 
 app = Flask(__name__)
 
@@ -402,50 +403,28 @@ def order_center():
 def admin_count():
     return render_template('admin_count.html')
 
-@app.route('/api/hits')
-@admin_required
-def hits_data():
-    # Query to find unique hits per day
-    results = db.session.query(
-        func.date(PageHit.visit_datetime).label('date'), 
-        func.count(PageHit.visitor_id.distinct()).label('unique_hits')
-    ).group_by(func.date(PageHit.visit_datetime)).all()
-
-    # Convert results to a format suitable for JSON
-    data = [{'date': str(result.date), 'unique_hits': result.unique_hits} for result in results]
-    return jsonify(data)
-
-@app.route('/api/hits-per-minute')
-@admin_required
-def hits_per_minute_data():
-    # Define the time range for the last 24 hours
-    time_threshold = datetime.utcnow() - timedelta(hours=24)
-
-    # Step 1: Get unique IPs in the last 24 hours
-    unique_ips = db.session.query(PageHit.visitor_id)\
-        .filter(PageHit.visit_datetime >= time_threshold)\
-        .distinct()\
-        .subquery()
-
-    # Step 2: Count hits per minute for these IPs
-    results = db.session.query(
-        func.strftime('%Y-%m-%d %H:%M', PageHit.visit_datetime).label('minute'),
-        func.count().label('hits')
-    ).filter(
-        PageHit.visit_datetime >= time_threshold,
-        PageHit.visitor_id.in_(unique_ips)
-    ).group_by('minute')\
-    .order_by('minute')\
-    .all()
-
-    # Convert results to a format suitable for JSON
-    data = [{'minute': result.minute, 'hits': result.hits} for result in results]
-    return jsonify(data)
-
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
     return redirect(url_for('admin_login'))
+
+#------------------------------------------------------------------------
+# DB Query route
+#------------------------------------------------------------------------
+
+@app.route('/api/execute-query', methods=['POST', 'GET'])
+@admin_required
+def execute_query():
+    query_data = request.get_json()
+    query = query_data['query']
+
+    # Using a connection to execute the query
+    with db.engine.connect() as connection:
+        result = connection.execute(text(query))
+        columns = result.keys()
+        rows = [dict(row) for row in result.fetchall()]
+
+    return jsonify({'columns': columns, 'rows': rows})
 
 #-------------------------------------------------------------------
 # api routes

@@ -17,21 +17,18 @@
     {{ block_header('SQL DB QUERY', random_icon)}}
     <textarea id="queryInput" style="width: 100%; height: 30em;"></textarea>
         <button onclick="submitQuery()">Run Query</button>
+        <button onclick="clearOutput()">Clear Output</button>
         <div id="queryResult"></div>
     {{ block_footer() }}
 
     {{block_header('Query Results',random_icon)}}
-    <div class="chart-container" style="position: relative; height:40vh; width:80vw">
-        <canvas id="myChart"></canvas>
-    </div>
     <div id="query_results"></div>
     {{block_footer()}}
 
 <script>
-
-    let myChart = null;
-
     function submitQuery() {
+        clearOutput();
+
         const query = document.getElementById('queryInput').value;
         fetch('/api/execute-query', {
             method: 'POST',
@@ -47,8 +44,12 @@
             document.getElementById('query_results').innerHTML = createHtmlTableFromData(data);
             
         }).catch(error => {
-            console.error('Error fetching data:', error);
+            document.getElementById('query_results').textContent = error;
         });
+    }
+
+    function clearOutput(){
+        document.getElementById('query_results').innerHTML = '';
     }
 
     function createHtmlTableFromData(data) {
@@ -77,50 +78,6 @@
     
         return tableHtml;
     }
-    
-
-    function processDataForChart(data) {
-        const labels = [];
-        const hitCounts = [];
-    
-        data.rows.forEach(row => {
-            labels.push(row.hour_block); // Assuming row.hour_block is in 'YYYY-MM-DD HH:00' format
-            hitCounts.push(row.hit_count);
-        });
-    
-        return { labels, hitCounts };
-    }
-
-
-
-    function createChart(processedData) {
-        if (myChart) {
-            myChart.destroy();
-        }
-
-        const ctx = document.getElementById('myChart').getContext('2d');
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: processedData.map(d => d.timeBlock),
-                datasets: [{
-                    label: 'Page Hits',
-                    data: processedData.map(d => d.hitCount),
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-
 </script>
 
 {% endblock %}

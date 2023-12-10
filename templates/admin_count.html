@@ -15,37 +15,9 @@
     </div>
 
     {{ block_header('SQL DB QUERY', random_icon)}}
-        <textarea id="queryInput"></textarea>
+    <textarea id="queryInput" style="width: 100%; height: 30em;"></textarea>
         <button onclick="submitQuery()">Run Query</button>
         <div id="queryResult"></div>
-        <script>
-        function submitQuery() {
-            const query = document.getElementById('queryInput').value;
-            fetch('/api/execute-query', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ query: query })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Process and display data
-                const queryResultsDiv = document.getElementById('query_results');
-                let displayText = 'Columns: ' + data.columns.join(', ') + '\n';
-        
-                data.rows.forEach((row, index) => {
-                    displayText += 'Row ' + (index + 1) + ': ';
-                    for (const [key, value] of Object.entries(row)) {
-                        displayText += key + ': ' + value + ', ';
-                    }
-                    displayText += '\n';
-                });
-        
-                queryResultsDiv.textContent = displayText;
-            });
-        }
-        </script>
     {{ block_footer() }}
 
     {{block_header('Query Results',random_icon)}}
@@ -56,44 +28,75 @@
     {{block_footer()}}
 
 <script>
+    function submitQuery() {
+        const query = document.getElementById('queryInput').value;
+        fetch('/api/execute-query', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: query })
+        })
+        .then(response => response.json())
+        .then(data => {
+            
+            /* //this will display the response as a text string
+            const queryResultsDiv = document.getElementById('query_results');
+            let displayText = 'Columns: ' + data.columns.join(', ') + '\n';
+            data.rows.forEach((row, index) => {
+                displayText += 'Row ' + (index + 1) + ': ';
+                for (const [key, value] of Object.entries(row)) {
+                    displayText += key + ': ' + value + ', ';
+                }
+                displayText += '\n';
+            });
+            
+            queryResultsDiv.textContent = displayText;
+            */
+            const processedData = processDataForChart(data);
+            createChart(processedData);
+        }).catch(error => {
+            console.error('Error fetching data:', error);
+        });
+    }
+
     function processDataForChart(data) {
         const labels = [];
         const hitCounts = [];
     
         data.rows.forEach(row => {
             // Combine the hour and minute block to form a label
-            const label = `${row.hour_block} - ${row.minute_block} mins`;
+            const label = `${row.hour_block} hr - ${row.minute_block} min`;
             labels.push(label);
             hitCounts.push(row.hit_count);
         });
     
         return { labels, hitCounts };
     }
-    
-    // Assuming data is the JSON response from your Flask API
-    const processedData = processDataForChart(data);
-    
-    const ctx = document.getElementById('myChart').getContext('2d');
-    const myChart = new Chart(ctx, {
-        type: 'bar', // or 'line' or other chart type as per your preference
-        data: {
-            labels: processedData.labels,
-            datasets: [{
-                label: 'Page Hits',
-                data: processedData.hitCounts,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
+
+    function createChart(processedData) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar', // or 'line' or other chart type as per your preference
+            data: {
+                labels: processedData.labels,
+                datasets: [{
+                    label: 'Page Hits',
+                    data: processedData.hitCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
                 }
             }
-        }
-    });
+        });
+    }
     
 </script>
 

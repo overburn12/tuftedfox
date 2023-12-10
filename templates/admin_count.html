@@ -49,7 +49,52 @@
     {{ block_footer() }}
 
     {{block_header('Query Results',random_icon)}}
-        <div id="query_results"></div>
+    <div class="chart-container" style="position: relative; height:40vh; width:80vw">
+        <canvas id="myChart"></canvas>
+    </div>
+    <div id="query_results"></div>
     {{block_footer()}}
+
+<script>
+    function processDataForChart(data) {
+        const labels = [];
+        const hitCounts = [];
+    
+        data.rows.forEach(row => {
+            // Combine the hour and minute block to form a label
+            const label = `${row.hour_block} - ${row.minute_block} mins`;
+            labels.push(label);
+            hitCounts.push(row.hit_count);
+        });
+    
+        return { labels, hitCounts };
+    }
+    
+    // Assuming data is the JSON response from your Flask API
+    const processedData = processDataForChart(data);
+    
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const myChart = new Chart(ctx, {
+        type: 'bar', // or 'line' or other chart type as per your preference
+        data: {
+            labels: processedData.labels,
+            datasets: [{
+                label: 'Page Hits',
+                data: processedData.hitCounts,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+</script>
 
 {% endblock %}

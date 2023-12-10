@@ -418,11 +418,11 @@ def execute_query():
     query_data = request.get_json()
     query = query_data['query']
 
-    # Using a connection to execute the query
     with db.engine.connect() as connection:
         result = connection.execute(text(query))
-        columns = result.keys()
-        rows = [dict(row) for row in result.fetchall()]
+        columns = list(result.keys())  # Convert columns to a list
+
+        rows = [dict(zip(columns, row)) for row in result.fetchall()]
 
     return jsonify({'columns': columns, 'rows': rows})
 

@@ -28,6 +28,9 @@
     {{block_footer()}}
 
 <script>
+
+    let myChart = null;
+
     function submitQuery() {
         const query = document.getElementById('queryInput').value;
         fetch('/api/execute-query', {
@@ -39,50 +42,70 @@
         })
         .then(response => response.json())
         .then(data => {
+
+            const formattedData = JSON.stringify(data, null, 2); // Indent with 2 spaces for readability
+            document.getElementById('query_results').innerHTML = createHtmlTableFromData(data);
             
-            /* //this will display the response as a text string
-            const queryResultsDiv = document.getElementById('query_results');
-            let displayText = 'Columns: ' + data.columns.join(', ') + '\n';
-            data.rows.forEach((row, index) => {
-                displayText += 'Row ' + (index + 1) + ': ';
-                for (const [key, value] of Object.entries(row)) {
-                    displayText += key + ': ' + value + ', ';
-                }
-                displayText += '\n';
-            });
-            
-            queryResultsDiv.textContent = displayText;
-            */
-            const processedData = processDataForChart(data);
-            createChart(processedData);
         }).catch(error => {
             console.error('Error fetching data:', error);
         });
     }
+
+    function createHtmlTableFromData(data) {
+        // Start with the opening of the table and the header row
+        let tableHtml = "<table><thead><tr>";
+    
+        // Add a header cell for each column
+        data.columns.forEach(column => {
+            tableHtml += `<th>${column}</th>`;
+        });
+    
+        // Close the header row and start the body
+        tableHtml += "</tr></thead><tbody>";
+    
+        // Add a row for each entry in the rows array
+        data.rows.forEach(row => {
+            tableHtml += "<tr>";
+            data.columns.forEach(column => {
+                tableHtml += `<td>${row[column]}</td>`; // Access the value of each column for this row
+            });
+            tableHtml += "</tr>";
+        });
+    
+        // Close the table
+        tableHtml += "</tbody></table>";
+    
+        return tableHtml;
+    }
+    
 
     function processDataForChart(data) {
         const labels = [];
         const hitCounts = [];
     
         data.rows.forEach(row => {
-            // Combine the hour and minute block to form a label
-            const label = `${row.hour_block} hr - ${row.minute_block} min`;
-            labels.push(label);
+            labels.push(row.hour_block); // Assuming row.hour_block is in 'YYYY-MM-DD HH:00' format
             hitCounts.push(row.hit_count);
         });
     
         return { labels, hitCounts };
     }
 
+
+
     function createChart(processedData) {
+        if (myChart) {
+            myChart.destroy();
+        }
+
         const ctx = document.getElementById('myChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'bar', // or 'line' or other chart type as per your preference
+        myChart = new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: processedData.labels,
+                labels: processedData.map(d => d.timeBlock),
                 datasets: [{
                     label: 'Page Hits',
-                    data: processedData.hitCounts,
+                    data: processedData.map(d => d.hitCount),
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
@@ -97,7 +120,7 @@
             }
         });
     }
-    
+
 </script>
 
 {% endblock %}

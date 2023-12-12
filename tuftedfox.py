@@ -1,13 +1,11 @@
 import subprocess, json, os, random, re
-from flask import Flask, render_template, request, jsonify, abort, Response, g, send_from_directory, redirect, url_for, session, flash
+from flask import Flask, render_template, request, jsonify, abort, send_from_directory, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
-from functools import wraps
 from werkzeug.utils import safe_join
 from werkzeug.exceptions import NotFound
 from werkzeug.routing import RequestRedirect
-from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image
 import random
@@ -15,16 +13,6 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import text
 
 app = Flask(__name__)
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get('logged_in'):
-            return f(*args, **kwargs)
-        else:
-            flash('You need to be logged in to view this page.')
-            return redirect(url_for('admin_login'))
-    return decorated_function
 
 #-------------------------------------------------------------------
 # app variables 
@@ -34,10 +22,6 @@ ORDER_FOLDER = 'orders/'
 UPLOAD_FOLDER = 'orders/'
 
 load_dotenv()
-app.secret_key = os.getenv('SECRET_KEY')
-admin_username = os.getenv('ADMIN_NAME')
-admin_password = os.getenv('ADMIN_PASSWORD')
-admin_password_hash = generate_password_hash(admin_password)  
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tuftedfox.db'
@@ -56,46 +40,6 @@ class PageHit(db.Model):
 #-------------------------------------------------------------------
 # functions 
 #-------------------------------------------------------------------
-
-def generate_thumbnail(image_path, thumbnail_path, size):
-    with Image.open(image_path) as img:
-        img.thumbnail(size)
-        img.save(thumbnail_path)
-
-def check_all_thumbnails(dir_path, size=(256, 256)):
-    ignore_dir = ['thumbnails', 'icons', '404']
-    safe_extensions={'png', 'jpg', 'jpeg'}
-
-    for root, dirs, files in os.walk(dir_path):
-        dirs[:] = [d for d in dirs if d not in ignore_dir]
-
-        thumbnail_directory = os.path.join(root, 'thumbnails')
-        image_files = [f for f in files if f.split('.')[-1].lower() in safe_extensions]
-
-        # Create thumbnail directory only if there are image files
-        if image_files and not os.path.exists(thumbnail_directory):
-            os.makedirs(thumbnail_directory)
-
-        existing_thumbnails = set(os.listdir(thumbnail_directory)) if os.path.exists(thumbnail_directory) else set()
-        parent_images = set()
-
-        for file in image_files:
-            image_path = os.path.join(root, file)
-            thumbnail_path = os.path.join(thumbnail_directory, file)
-            parent_images.add(file)
-
-            #i disabled this line so it always overwrites every thumbnail, enable to only create new ones
-            #if not os.path.exists(thumbnail_path):
-            generate_thumbnail(image_path, thumbnail_path, size)
-
-        # Remove thumbnails without a parent image
-        for thumbnail in existing_thumbnails:
-            if thumbnail not in parent_images:
-                os.remove(os.path.join(thumbnail_directory, thumbnail))
-
-        # Delete the thumbnail directory if empty
-        if os.path.exists(thumbnail_directory) and not parent_images:
-            os.rmdir(thumbnail_directory)
 
 def load_images_for_category(category_path):
     allowed_extensions = ['jpg', 'jpeg', 'png']
@@ -333,111 +277,7 @@ def count_page():
 
 @app.route('/analysis', methods=['GET','POST'])
 def image_analysis_page():
-    return render_template('rug_colors.html')
-#--------------------------------------------
-
-@app.route('/admin', methods=['GET', 'POST'])
-def admin_login():
-    if 'logged_in' in session and session['logged_in']:
-        return redirect(url_for('admin_dashboard'))
-
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if username == admin_username and check_password_hash(admin_password_hash, password):
-            session['logged_in'] = True
-            return redirect(url_for('admin_dashboard'))
-        else:
-            flash('Invalid credentials')
-    return render_template('admin_login.html')  # Your login page template
-
-@app.route('/admin/dashboard')
-@admin_required
-def admin_dashboard():
-    with open('data/update.log', 'r') as logfile:
-        log_content = logfile.read()
-
-    message_count = 0
-    for filename in os.listdir('messages/'):
-        if filename.startswith('m_') and filename.endswith('.txt'):
-            message_count += 1
-
-    order_count = 0
-    for filename in os.listdir('orders/'):
-        if filename.endswith(".txt"):
-            order_count += 1
-
-    return render_template('admin_dashboard.html', log_content=log_content, app_start_time=app_start_time, message_count=message_count, order_count=order_count)
-
-@app.route('/admin/thumbnail',  methods=['GET', 'POST'])
-@admin_required
-def do_the_thumbnails():
-    check_all_thumbnails('img/ai/', (256, 256))
-    check_all_thumbnails('img/rugs/', (512, 512))
-    return '<html>the thumbnail creation is done!</html>'
-
-@app.route('/admin/update', methods=['GET', 'POST'])
-@admin_required
-def update_server():
-    subprocess.run('python3 updater.py', shell=True)
-    return '<html>Updated!</html>'
-
-@app.route('/admin/messages', methods = ['GET','POST'])
-@admin_required
-def message_center():
-    messages = []
-    for filename in os.listdir('messages/'):
-        if filename.startswith('m_') and filename.endswith('.txt'):
-            with open(os.path.join('messages', filename), 'r') as file:
-                message = {
-                    'filename': filename,
-                    'content': file.read()
-                }
-                messages.append(message)
-
-    return render_template('admin_messages.html', messages=messages)
-
-@app.route('/admin/orders', methods = ['GET','POST'])
-@admin_required
-def order_center():
-    orders = []
-    for filename in os.listdir('orders/'):
-        if filename.endswith('.txt'):
-            with open(os.path.join('orders', filename), 'r') as file:
-                order = {
-                    'filename': filename,
-                    'content': file.read()
-                }
-                orders.append(order)
-    return render_template('admin_orders.html', orders = orders)
-
-@app.route('/admin/count')
-@admin_required
-def admin_count():
-    return render_template('admin_count.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('admin_login'))
-
-#------------------------------------------------------------------------
-# DB Query route
-#------------------------------------------------------------------------
-
-@app.route('/api/execute-query', methods=['POST', 'GET'])
-@admin_required
-def execute_query():
-    query_data = request.get_json()
-    query = query_data['query']
-
-    with db.engine.connect() as connection:
-        result = connection.execute(text(query))
-        columns = list(result.keys())  # Convert columns to a list
-
-        rows = [dict(zip(columns, row)) for row in result.fetchall()]
-
-    return jsonify({'columns': columns, 'rows': rows})
+    return render_template('analysis.html')
 
 #-------------------------------------------------------------------
 # api routes

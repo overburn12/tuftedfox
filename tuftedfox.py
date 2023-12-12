@@ -295,7 +295,7 @@ def count_page():
     ).scalar()
 
     # List of words to filter out for invalid hits
-    exclude_invalid = ['robots.txt', 'thispagedoesnotexist']
+    exclude_invalid = ['robots.txt', 'this_page_does_not_exist']
 
     # Calculate the total count of invalid hits excluding certain pages
     total_invalid_hits = db.session.query(

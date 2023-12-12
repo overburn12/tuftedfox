@@ -317,7 +317,7 @@ def image_analysis_page():
 # api routes
 #-------------------------------------------------------------------
 
-@app.route('/rugcolor/analyze', methods=['POST'])
+@app.route('/rugcolor/analyze', methods=['POST','GET'])
 def analyze():
     try:
         image_file = request.files['image']

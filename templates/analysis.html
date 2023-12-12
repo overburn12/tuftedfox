@@ -151,7 +151,7 @@
                 formData.append('image', file);
         
                 // Send this file to the server
-                fetch('https://tuftedfox.com/rugcolor/analyze', {
+                fetch('/rugcolor/analyze', {
                     method: 'POST',
                     body: formData
                 })

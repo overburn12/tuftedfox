@@ -1,4 +1,4 @@
-import subprocess, json, os, random, re
+import json, os, random, re, io
 from flask import Flask, render_template, request, jsonify, abort, send_from_directory, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
@@ -8,6 +8,7 @@ from werkzeug.routing import RequestRedirect
 from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image
+from collections import defaultdict
 import random
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
@@ -40,6 +41,39 @@ class PageHit(db.Model):
 #-------------------------------------------------------------------
 # functions 
 #-------------------------------------------------------------------
+
+def analyze_image_colors(img, colors_used):
+    if img.mode == 'P':
+        img = img.convert('RGBA')
+    pixels = img.getdata()
+    color_count = defaultdict(int)
+    TRANSPARENT_COLOR = (-1, -1, -1)  # Unique identifier for fully transparent pixels
+
+    for pixel in pixels:
+        if len(pixel) == 4:  # RGBA format
+            r, g, b, a = pixel
+            if a < 16:  # Treat as fully transparent
+                color_count[TRANSPARENT_COLOR] += 1
+            else:  # Treat as regular color
+                color_count[(r, g, b)] += 1
+        else:  # RGB format
+            color_count[pixel] += 1
+
+    total_pixels = img.width * img.height
+    color_percentage = {color: (count / total_pixels) * 100 for color, count in color_count.items()}
+
+    # Sort the colors by frequency in descending order
+    sorted_color_data = sorted(color_count.items(), key=lambda item: item[1], reverse=True)
+
+    # Create a list of colors with count and percentage
+    color_data_list = [{'color': color, 'count': count, 'percentage': color_percentage[color]} 
+                        for color, count in sorted_color_data]
+
+    # Slice the list if colors_used is greater than 0
+    if colors_used > 0:
+        color_data_list = color_data_list[:colors_used]
+
+    return color_data_list
 
 def load_images_for_category(category_path):
     allowed_extensions = ['jpg', 'jpeg', 'png']
@@ -282,6 +316,24 @@ def image_analysis_page():
 #-------------------------------------------------------------------
 # api routes
 #-------------------------------------------------------------------
+
+@app.route('/rugcolor/analyze', methods=['POST'])
+def analyze():
+    try:
+        image_file = request.files['image']
+        colors_used = int(request.form.get('colorsUsed', 0))
+
+        if image_file:
+            image_stream = io.BytesIO(image_file.read())
+            with Image.open(image_stream) as image:
+                color_data = analyze_image_colors(image, colors_used)
+                return jsonify(color_data)
+        else:
+            return jsonify({"error": "No image provided"}), 400
+
+    except Exception as e:
+        app.logger.error('Error during image analysis: %s', e, exc_info=True)
+        return jsonify({"error": "Server error during image analysis"}), 500
 
 @app.route('/upload_image', methods=['GET', 'POST'])
 def upload_image():

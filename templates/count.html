@@ -33,7 +33,10 @@
 
 {% block content %}
     <div class = 'element-block'>
-        <p>{{total_unique}} total unique visitors</p>
+        <p>{{ total_unique }} unique visitors</p>
+        <p>{{ total_image_hits }} image hits</p>
+        <p>{{ total_valid_hits }} page hits</p>
+        <p>{{ total_invalid_hits }} invalid hits</p>
     </div>
 
     {{ block_header('Page Hits', random_icon)}}
@@ -43,36 +46,6 @@
                 <th>Hits</th>
             </tr>
             {% for page, hits in page_hits %}
-            <tr>
-                <td>{{ page }}</td>
-                <td>{{ hits }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {{ block_footer() }}
-
-    {{ block_header('Image Hits', random_icon)}}
-        <table class="hits_table">
-            <tr>
-                <th>Image Page</th>
-                <th>Hits</th>
-            </tr>
-            {% for page, hits in page_hits_images %}
-            <tr>
-                <td><a href="{{ page }}">{{ page }}</a></td>
-                <td>{{ hits }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    {{ block_footer() }}
-
-    {{ block_header('Invalid hits', random_icon)}}
-        <table class="hits_table">
-            <tr>
-                <th>Page</th>
-                <th>Hits</th>
-            </tr>
-            {% for page, hits in page_hits_invalid %}
             <tr>
                 <td>{{ page }}</td>
                 <td>{{ hits }}</td>

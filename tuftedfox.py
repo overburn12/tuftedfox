@@ -225,7 +225,6 @@ def before_request():
 
 @app.route('/')
 def index():
-    #ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     return render_template('index.html')
 
 @app.route('/custom', methods=['GET', 'POST'])
@@ -272,7 +271,7 @@ def message_sent():
 def count_page():
 
     # Query and tally the valid page hits
-    exclude_words = ['admin', '404', 'thumbnail', 'icon', 'logout']
+    exclude_words = ['admin', '404', 'thumbnail', 'icon', 'logout', 'api', 'upload_image','order_sent','submit_order', 'message_sent']
     valid_hits = db.session.query(
         PageHit.page_url,
         func.count(PageHit.id)
@@ -284,9 +283,8 @@ def count_page():
         ]
     ).group_by(PageHit.page_url).all()
 
-    # Query and tally the image page hits
-    image_hits = db.session.query(
-        PageHit.page_url, 
+    # Calculate the total count of image hits
+    total_image_hits = db.session.query(
         func.count(PageHit.id)
     ).filter(
         PageHit.hit_type == 'image',
@@ -294,29 +292,27 @@ def count_page():
         *[
             ~PageHit.page_url.ilike(f'%{word}%') for word in exclude_words[1:]
         ]
-    ).group_by(PageHit.page_url).all()
+    ).scalar()
 
-    # Query and tally the invalid page hits
-    invalid_hits = db.session.query(
-        PageHit.page_url, 
+    # Calculate the total count of invalid hits
+    total_invalid_hits = db.session.query(
         func.count(PageHit.id)
-    ).filter(PageHit.hit_type == 'invalid').group_by(PageHit.page_url).all()
+    ).filter(PageHit.hit_type == 'invalid').scalar()
+
+    total_valid_hits = db.session.query(
+        func.count(PageHit.id)
+    ).filter(PageHit.hit_type == 'valid').scalar()
 
     total_unique = db.session.query(func.count(PageHit.visitor_id.distinct()))\
                         .filter(PageHit.hit_type.in_(['valid', 'image']))\
                         .scalar()
     
-    #unique_ips = PageHit.query.filter((PageHit.hit_type == 'valid') | (PageHit.hit_type == 'image')) \
-    #                      .distinct(PageHit.visitor_id) \
-    #                      .with_entities(PageHit.visitor_id) \
-    #                      .all()
-
-    # Pass the tallied hits to the template
     return render_template('count.html',
                            page_hits=valid_hits,
-                           page_hits_images=image_hits,
-                           page_hits_invalid=invalid_hits,
-                           total_unique=total_unique)
+                           total_image_hits=total_image_hits,
+                           total_invalid_hits=total_invalid_hits,
+                           total_unique=total_unique,
+                           total_valid_hits=total_valid_hits)
 
 @app.route('/analysis', methods=['GET','POST'])
 def image_analysis_page():

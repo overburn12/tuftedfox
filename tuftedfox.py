@@ -294,14 +294,31 @@ def count_page():
         ]
     ).scalar()
 
-    # Calculate the total count of invalid hits
+    # List of words to filter out for invalid hits
+    exclude_invalid = ['robots.txt', 'thispagedoesnotexist']
+
+    # Calculate the total count of invalid hits excluding certain pages
     total_invalid_hits = db.session.query(
         func.count(PageHit.id)
-    ).filter(PageHit.hit_type == 'invalid').scalar()
+    ).filter(
+        PageHit.hit_type == 'invalid',
+        *[
+            ~PageHit.page_url.ilike(f'%{word}%') for word in exclude_invalid
+        ]
+    ).scalar()
 
+    # List of words to filter out for valid hits
+    exclude_valid = ['styles.css']
+
+    # Calculate the total count of valid hits excluding certain pages
     total_valid_hits = db.session.query(
         func.count(PageHit.id)
-    ).filter(PageHit.hit_type == 'valid').scalar()
+    ).filter(
+        PageHit.hit_type == 'valid',
+        *[
+            ~PageHit.page_url.ilike(f'%{word}%') for word in exclude_valid
+        ]
+    ).scalar()
 
     total_unique = db.session.query(func.count(PageHit.visitor_id.distinct()))\
                         .filter(PageHit.hit_type.in_(['valid', 'image']))\

@@ -12,8 +12,16 @@ from collections import defaultdict
 import random
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
+
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,  # Use the client's IP address to track the rate limit
+    default_limits=["200 per day", "10 per minute"]  # Default rate limits
+)
 
 #-------------------------------------------------------------------
 # app variables 
@@ -72,6 +80,15 @@ def analyze_image_colors(img, colors_used):
     # Slice the list if colors_used is greater than 0
     if colors_used > 0:
         color_data_list = color_data_list[:colors_used]
+
+    ###save the images###
+    os.makedirs('saved', exist_ok=True)
+    # Format the datetime as a string for the filename
+    datetime_string = datetime.now().strftime('%Y%m%d_%H%M%S')
+    # Construct the filename with directory
+    filename = f'saved/{datetime_string}.png'
+    # Save the image
+    img.save(filename, 'PNG')
 
     return color_data_list
 
@@ -407,6 +424,12 @@ def page_not_found(e):
     random_image_name = random.choice(error_images)
     image_path = f'/img/404/{random_image_name}'
     return render_template('404.html', image_path=image_path), 404
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    message_title = '429 Rate Limit'
+    message_content = '<p>You have exceeded the request rate limit. </p><P>redirecting in 3 seconds...</p>'
+    return render_template('redirect.html', message_title=message_title, message_content=message_content), 429
 
 #-------------------------------------------------------------------
 

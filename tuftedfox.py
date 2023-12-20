@@ -18,8 +18,8 @@ from flask_limiter.util import get_remote_address
 app = Flask(__name__)
 
 limiter = Limiter(
-    app,
-    key_func=get_remote_address,  # Use the client's IP address to track the rate limit
+    get_remote_address,  # Use the client's IP address to track the rate limit
+    app=app,
     default_limits=["200 per day", "10 per minute"]  # Default rate limits
 )
 

@@ -86,7 +86,7 @@ def analyze_image_colors(img, colors_used):
     # Format the datetime as a string for the filename
     datetime_string = datetime.now().strftime('%Y%m%d_%H%M%S')
     # Construct the filename with directory
-    filename = f'saved/{datetime_string}.png'
+    filename = generate_filename(f'saved/{datetime_string}.png')
     # Save the image
     img.save(filename, 'PNG')
 

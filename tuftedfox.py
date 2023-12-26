@@ -191,28 +191,48 @@ def generate_filename(filepath):
 # page count
 #-------------------------------------------------------------------
 
-@app.before_request
-def before_request():
+@app.after_request
+def after_request(response):
     page = request.path
-    hit_type = 'none'
     visitor_id = request.headers.get('X-Forwarded-For', request.remote_addr)
     ignore_list = ['thumbnail', 'icons']
 
     for item in ignore_list:
         if item in page:
-            return
-    try:
-        app.url_map.bind('').match(page)
-        if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-            hit_type = 'image'
-        else:
-            hit_type = 'valid'
-    except (NotFound, RequestRedirect):
-        hit_type = 'invalid'
-    finally:
-        new_hit = PageHit(page_url=page, hit_type=hit_type, visitor_id=visitor_id)
-        db.session.add(new_hit)
-        db.session.commit()
+            return response
+
+    hit_type = 'invalid' if response.status_code == 404 else 'valid'
+    if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+        hit_type = 'image'
+
+    new_hit = PageHit(page_url=page, hit_type=hit_type, visitor_id=visitor_id)
+    db.session.add(new_hit)
+    db.session.commit()
+    return response
+
+# #the old route tracker. delete this soon
+#@app.before_request
+#def before_request():
+#    page = request.path
+#    hit_type = 'none'
+#    visitor_id = request.headers.get('X-Forwarded-For', request.remote_addr)
+#    ignore_list = ['thumbnail', 'icons']
+#
+#    for item in ignore_list:
+#        if item in page:
+#            return
+#    try:
+#        app.url_map.bind('').match(page)
+#        if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+#            hit_type = 'image'
+#        else:
+#            hit_type = 'valid'
+#    except (NotFound, RequestRedirect):
+#        hit_type = 'invalid'
+#    finally:
+#        new_hit = PageHit(page_url=page, hit_type=hit_type, visitor_id=visitor_id)
+#        db.session.add(new_hit)
+#        db.session.commit()
 
 #-------------------------------------------------------------------
 # page routes

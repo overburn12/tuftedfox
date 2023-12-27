@@ -1,3 +1,4 @@
+import ipaddress
 import json, os, random, re, io
 from flask import Flask, render_template, request, jsonify, abort, send_from_directory, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -15,6 +16,8 @@ from sqlalchemy import text
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+from flask_migrate import Migrate
+
 app = Flask(__name__)
 
 #limiter = Limiter(
@@ -27,10 +30,10 @@ app = Flask(__name__)
 # app variables 
 #-------------------------------------------------------------------
 
+load_dotenv()
+
 ORDER_FOLDER = 'orders/'
 UPLOAD_FOLDER = 'orders/'
-
-load_dotenv()
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tuftedfox.db'
@@ -38,17 +41,27 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app_start_time = int(datetime.utcnow().timestamp())
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class PageHit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     page_url = db.Column(db.String(500))
-    hit_type = db.Column(db.String(50)) # 'image', 'valid', 'invalid'
+    hit_type = db.Column(db.String(50))  # 'image', 'valid', 'invalid', 'suspicious'
     visit_datetime = db.Column(db.DateTime, default=datetime.utcnow)
-    visitor_id = db.Column(db.String(100)) # IP or session ID
+    visitor_id = db.Column(db.String(100))  # IP or session ID
+    referrer_url = db.Column(db.String(500))  # URL of the referring page
+    user_agent = db.Column(db.String(500))  # String representing the client's user agent
 
 #-------------------------------------------------------------------
 # functions 
 #-------------------------------------------------------------------
+
+def is_valid_ip(ip_addr):
+    try:
+        ipaddress.ip_address(ip_addr)
+        return True
+    except ValueError:
+        return False
 
 def analyze_image_colors(img, colors_used):
     if img.mode == 'P':
@@ -193,46 +206,40 @@ def generate_filename(filepath):
 
 @app.after_request
 def after_request(response):
-    page = request.path
+    page_url = request.path
     visitor_id = request.headers.get('X-Forwarded-For', request.remote_addr)
+    referrer_url = request.referrer
+    user_agent = request.user_agent.string
     ignore_list = ['thumbnail', 'icons']
 
     for item in ignore_list:
-        if item in page:
+        if item in page_url:
             return response
 
-    hit_type = 'invalid' if response.status_code == 404 else 'valid'
-    if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+    if not is_valid_ip(visitor_id):
+        hit_type = 'suspicious'
+    elif response.status_code == 404:
+        hit_type = 'invalid'
+    elif page_url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
         hit_type = 'image'
+    else:
+        hit_type = 'valid'
 
-    new_hit = PageHit(page_url=page, hit_type=hit_type, visitor_id=visitor_id)
+    new_hit = PageHit(page_url=page_url, hit_type=hit_type, visitor_id=visitor_id,referrer_url=referrer_url,user_agent=user_agent)
     db.session.add(new_hit)
     db.session.commit()
     return response
 
-# #the old route tracker. delete this soon
-#@app.before_request
-#def before_request():
-#    page = request.path
-#    hit_type = 'none'
-#    visitor_id = request.headers.get('X-Forwarded-For', request.remote_addr)
-#    ignore_list = ['thumbnail', 'icons']
-#
-#    for item in ignore_list:
-#        if item in page:
-#            return
-#    try:
-#        app.url_map.bind('').match(page)
-#        if page.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-#            hit_type = 'image'
-#        else:
-#            hit_type = 'valid'
-#    except (NotFound, RequestRedirect):
-#        hit_type = 'invalid'
-#    finally:
-#        new_hit = PageHit(page_url=page, hit_type=hit_type, visitor_id=visitor_id)
-#        db.session.add(new_hit)
-#        db.session.commit()
+
+#block any access if the visitor_id is not an IP address
+@app.before_request
+def block_invalid_ips():
+    visitor_id = request.headers.get('X-Forwarded-For', request.remote_addr)
+    try:
+        ipaddress.ip_address(visitor_id)
+    except ValueError:
+        return "Access Forbidden", 403
+
 
 #-------------------------------------------------------------------
 # page routes
